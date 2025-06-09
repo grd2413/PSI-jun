@@ -4,7 +4,7 @@ from .other_models import Referee # noqa F401
 from .round import Round # noqa F401
 from .game import Game # noqa F401
 from .player import Player, LichessAPIError # noqa F401
-from .constants import Scores, TournamentType, TournamentSpeed, TournamentBoardType, Color, RankingSystem # noqa F401
+from .constants import Scores, TournamentType, TournamentSpeed, TournamentBoardType, Color, RankingSystem, LICHESS_USERS # noqa F401
 
 getGamesCount = Tournament.getGamesCount
 create_rounds = game.create_rounds
