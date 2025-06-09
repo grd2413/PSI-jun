@@ -1,0 +1,127 @@
+from django.db import models
+from chess_models.models import constants
+from chess_models.models.player import Player
+from chess_models.models.round import Round  
+from chess_models.models.constants import Scores
+from rest_framework import serializers
+import requests
+
+from .other_models import LichessAPIError
+
+class Game(models.Model):
+    white = models.ForeignKey(Player, related_name='white_games', on_delete=models.DO_NOTHING, null=True, blank=True)
+    black = models.ForeignKey(Player, related_name='black_games', on_delete=models.DO_NOTHING, null=True, blank=True)
+    finished = models.BooleanField(default=False)
+    round = models.ForeignKey(Round, on_delete=models.DO_NOTHING)
+    start_date = models.DateTimeField(auto_now_add=True)
+    update_date = models.DateTimeField(auto_now=True)
+    result = models.CharField(max_length=1, default=Scores.NOAVAILABLE)
+    rankingOrder = models.IntegerField(default=0)
+
+    def get_lichess_game_result(self, game_id=None):
+
+        if game_id is None:
+            game_id = self.id 
+        url = f" https://lichess.org/api/game/{game_id}"
+
+        try:
+            response = requests.get(url)
+            response.raise_for_status()  
+
+            data = response.json()
+
+            white_player_lichess = data['players']['white']['userId']
+            black_player_lichess = data['players']['black']['userId']
+
+            white_player = self.white.lichess_username
+            black_player = self.black.lichess_username
+
+            if white_player != white_player_lichess or black_player != black_player_lichess:
+                raise LichessAPIError(f"Los jugadores no coinciden con los datos de Lichess. Game id: {game_id}")
+
+            winner = data['winner']
+            self.finished = True
+            if winner == 'white':
+                result = Scores.WHITE
+            elif winner == 'black':
+                result = Scores.BLACK
+            elif winner == 'draw':
+                result = Scores.DRAW
+            else:
+                self.finished = False
+                result = Scores.NOAVAILABLE
+
+            self.result = result
+            self.save(using='default')
+
+            return result, white_player, black_player
+
+        except requests.exceptions.RequestException as e:
+            raise LichessAPIError(f"No se pudo obtener el resultado para el juego ID {game_id}: {str(e)}")
+        except LichessAPIError as e:
+            raise LichessAPIError(f"Error con el juego ID {game_id}: {str(e)}")
+      
+    def __str__(self):
+        return f"{self.white}({self.white.id}) vs {self.black}({self.black.id}) = {self.result.label}"
+    
+def create_rounds(tournament, swissByes=[]):    
+    players = tournament.getPlayers()
+    num_players = tournament.getPlayersCount()
+    rounds = []
+    rounds_schedule = berger_rounds(num_players)
+    for round_number in range(num_players - 1):
+        round_instance = Round.objects.create(tournament=tournament, name=f"Rd {round_number+1}")
+        current_round = []
+        for round_game in range(num_players // 2):
+            current_round += [Game.objects.create(
+                white=players[rounds_schedule[round_number][round_game][0]],
+                black=players[rounds_schedule[round_number][round_game][1]],
+                round=round_instance,
+                result=Scores.NOAVAILABLE,
+                finished=False
+            )]
+        rounds.append(current_round)
+    return rounds
+
+def berger_rounds(num_players):
+    assert num_players > 0
+    half = num_players // 2
+    players = [i for i in range(num_players)]
+    pivot = players[-1]
+    barrel = list(reversed(players[:-1]))
+    rounds = []
+    for round_nr in range(num_players-1):
+        even_round = round_nr % 2 == 0
+        pairs = []
+        pair = (pivot, barrel[-1])
+        if even_round:
+            pair = list(reversed(pair))
+        pairs.append(pair)
+        even_round = True
+        for idx in range(half-1):
+            pair = (barrel[idx], barrel[-(idx+1+1)])
+            if even_round:
+                pair = list(reversed(pair))
+            pairs.append(pair)
+        rounds.append(pairs)
+        barrel = barrel[half-1:] + barrel[:half-1]
+    return rounds
+
+class GameSerializer(serializers.ModelSerializer):
+    white = serializers.StringRelatedField()
+    black = serializers.StringRelatedField()
+    round = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        model = Game
+        fields = [
+            'id',
+            'white',
+            'black',
+            'finished',
+            'round',
+            'start_date',
+            'update_date',
+            'result',
+            'rankingOrder'
+        ]
