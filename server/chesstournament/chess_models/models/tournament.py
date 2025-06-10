@@ -39,20 +39,28 @@ class Tournament(models.Model):
     rankingList = models.ManyToManyField(RankingSystemClass, blank=True)
 
     def getScores(self):
-            scores = {player: self._getPlayerDict(player) for player in self.getPlayers()}
-            sorted_players = [x for x in scores.keys()]
-            #sorted_players.sort(key=cmp_to_key(lambda p1, p2 : self._compareScores(p1, p2, scores)), reverse=True)
-            return {player: scores[player] for player in sorted_players}
+        # results = {}
+        # PLAIN_SCORE = RankingSystem.PLAIN_SCORE.value
+        # scores = {player: self._getPlayerDict(player) for player in self.getPlayers()}
+        # players = Tournament.getPlayers(self, sorted=True)
+        # for player in players:
+        #     results[player] = {}
+        #     results[player][PLAIN_SCORE] = scores[player]['PS']
+        # return results
+        scores = {player: self._getPlayerDict(player) for player in self.getPlayers()}
+        #sorted_players = [x for x in scores.keys()]
+        #sorted_players.sort(key=cmp_to_key(lambda p1, p2 : self._compareScores(p1, p2, scores)), reverse=True)
+        return {player: scores[player] for player in scores}
 
     def _getPlayerDict(self, player):
         games = self._getPlayerGames(player)
         wins, draws, loses, blacks = self._getPlayerStats(games, player)
         byes = self._getPlayerSpecialStats(games, player)
-        #plain_points = (wins + byes) * self.win_points + draws * self.draw_points + loses * self.lose_points
+        
         plain_points = wins * self.win_points + draws * self.draw_points + loses * self.lose_points + byes
         
         #print("Player: "+ player.name + " b: " + str(byes) + " w: " + str(wins) + " t: " + str(draws) + " l: " + str(loses) + " TOTAL: " + str(plain_points) + "\n")
-        #return {RankingSystem.PLAIN_SCORE.value: plain_points}
+        
         return {RankingSystem.PLAIN_SCORE.value: plain_points,
                 RankingSystem.WINS.value: wins,
                 RankingSystem.BLACKTIMES.value: blacks,
@@ -76,36 +84,69 @@ class Tournament(models.Model):
                     games.append(game)
         return games
     
+    # def _getPlayerStats(self, games, player):
+    #     wins, draws, loses, blacks = 0, 0, 0, 0 
+    #     for game in games:
+    #         if game.result == Scores.DRAW:
+    #             draws+=1
+    #         elif game.white == player:
+    #             if game.result == Scores.WHITE:
+    #                 wins+=1
+    #             else:
+    #                 loses+=1
+    #         elif game.black == player:
+    #             blacks+=1
+    #             if game.result == Scores.BLACK:
+    #                 wins+=1    
+    #             else:
+    #                 loses+=1
+    #     return wins, draws, loses, blacks
     def _getPlayerStats(self, games, player):
-        wins, draws, loses, blacks = 0, 0, 0, 0 
+        wins, draws, loses, blacks = 0, 0, 0, 0
         for game in games:
-            if game.result == Scores.DRAW:
-                draws+=1
-            elif game.white == player:
-                if game.result == Scores.WHITE:
-                    wins+=1
-                else:
-                    loses+=1
-            elif game.black == player:
-                blacks+=1
-                if game.result == Scores.BLACK:
-                    wins+=1    
-                else:
-                    loses+=1
+            result = game.result
+
+            if game.black == player:
+                blacks += 1
+
+            # DRAW
+            if result == Scores.DRAW:
+                draws += 1
+            # WIN
+            elif (
+                (game.white == player and result == Scores.WHITE) or
+                (game.black == player and result == Scores.BLACK)
+            ):
+                wins += 1
+            # LOSE
+            elif (
+                (game.white == player and result == Scores.BLACK) or
+                (game.black == player and result == Scores.WHITE)
+            ):
+                loses += 1
+            # BYES IGNORED
+            elif result in [Scores.FORFEITWIN, Scores.BYE_H, Scores.BYE_F, Scores.BYE_U, Scores.BYE_Z]:
+                continue
         return wins, draws, loses, blacks
 
+
     def _getPlayerSpecialStats(self, games, player):
-        byes = 0
+        byes_f = 0
+        byes_h = 0
+        fortwin = 0
         for game in games:
-            if game.result == Scores.BYE_F:
-                byes+=1
+            if game.result in [Scores.BYE_F, Scores.BYE_U]:
+                byes_f+=1
             elif game.result == Scores.BYE_H:
-                byes+=1
+                byes_h+=1
+            elif (game.result == Scores.FORFEITWIN and game.white == player):
+                fortwin += 1
+            byes = byes_f * self.win_points + byes_h * self.draw_points + fortwin * self.win_points
         return byes
 
     def getBlackWins(self, scores):
         for player in scores.keys():
-            print(player, self._getBlackWins(player),  self._getPlayerWins(player))
+            #print(player, self._getBlackWins(player),  self._getPlayerWins(player))
             scores[player][RankingSystem.BLACKTIMES.value] = 0
             scores[player][RankingSystem.WINS.value] = 0
         return scores
@@ -128,7 +169,7 @@ class Tournament(models.Model):
     def getRanking(self):
         scores = self.getScores()
         ranked_players = [x for x in scores.keys()]
-        ranked_players.sort(key=cmp_to_key(lambda p1, p2 : self._compareScores(p1, p2, scores)), reverse=True)
+        #ranked_players.sort(key=cmp_to_key(lambda p1, p2 : self._compareScores(p1, p2, scores)), reverse=True)
         for i in range(len(ranked_players)):
             scores[ranked_players[i]][RANK] = i + 1
         return scores
