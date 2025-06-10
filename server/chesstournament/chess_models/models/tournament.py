@@ -262,8 +262,27 @@ class Tournament(models.Model):
     def getBuchholz(self):
         pass
     
-    def getAdjustedScores(self, playersList):
-        pass
+    def getAdjustedScores(tournament, playersList):
+
+        adjustedScores = {}
+
+        for player, data in playersList.items():
+            results = data['result'] 
+            base_score = sum(results)
+            bonus = 0.0
+
+            if (len(data['OTBopponents']) < 2):
+                bonus = 1.0
+
+            adjusted = base_score + bonus
+
+            adjustedScores[player] = {
+                RankingSystem.PLAIN_SCORE: base_score,
+                'adjustedScore': adjusted
+            }
+
+        return adjustedScores
+
     
     def getBuchholzCutMinusOne(self):
         pass
