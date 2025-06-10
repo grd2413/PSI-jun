@@ -2,7 +2,7 @@ from django.db import models
 from chess_models.models import constants
 from chess_models.models.player import Player
 from chess_models.models.round import Round  
-from chess_models.models.constants import Scores
+from chess_models.models.constants import Scores, TournamentType
 from rest_framework import serializers
 import requests
 
@@ -67,30 +67,56 @@ class Game(models.Model):
 def create_rounds(tournament, swissByes=[]):    
     players = tournament.getPlayers(sorted=True)
     num_players = tournament.getPlayersCount()
-    #print(players[0])
     rounds = []
-    rounds_schedule = berger_rounds(num_players)
-    for round_number in range(num_players - 1):
-        round_instance = Round.objects.create(tournament=tournament, name=f"Rd {round_number+1}")
-        current_round = []
-        for round_game in range(num_players // 2):
-            white_idx = rounds_schedule[round_number][round_game][0]
-            black_idx = rounds_schedule[round_number][round_game][1]
-            current_round.append(Game.objects.create(
-                white=players[white_idx],
-                black=players[black_idx],
-                round=round_instance,
-                result=Scores.NOAVAILABLE,
-                finished=False
-            ))
-            # current_round += [Game.objects.create(
-            #     white=players[rounds_schedule[round_number][round_game][0]],
-            #     black=players[rounds_schedule[round_number][round_game][1]],
-            #     round=round_instance,
-            #     result=Scores.NOAVAILABLE,
-            #     finished=False
-            # )]
-        rounds.append(current_round)
+    
+    if (tournament.tournament_type == TournamentType.ROUNDROBIN):
+        rounds_schedule = berger_rounds(num_players)
+        for round_number in range(num_players - 1):
+            round_instance = Round.objects.create(tournament=tournament, name=f"Rd {round_number+1}")
+            current_round = []
+            for round_game in range(num_players // 2):
+                white_idx = rounds_schedule[round_number][round_game][0]
+                black_idx = rounds_schedule[round_number][round_game][1]
+                current_round.append(Game.objects.create(
+                    white=players[white_idx],
+                    black=players[black_idx],
+                    round=round_instance,
+                    result=Scores.NOAVAILABLE,
+                    finished=False
+                ))
+            rounds.append(current_round)
+    elif (tournament.tournament_type == TournamentType.DOUBLEROUNDROBINSAMEDAY):
+        rounds_schedule = rb_rounds(num_players)
+        #print(rounds_schedule)
+    return rounds
+
+def rb_rounds(num_players):
+    half = num_players // 2
+    players = list(range(num_players))
+    pivot = players[-1]
+    barrel = list(reversed(players[:-1]))
+    rounds = []
+
+    for round_nr in range(num_players - 1):
+        even_round = round_nr % 2 == 0
+        pairs = []
+
+        pair = (pivot, barrel[-1])
+        if even_round:
+            pair = (barrel[-1], pivot)
+        pairs.append(pair)
+
+        for idx in range(half - 1):
+            p1 = barrel[idx]
+            p2 = barrel[-(idx + 2)]
+            pair = (p2, p1) if even_round else (p1, p2)
+            pairs.append(pair)
+
+        rounds.append(pairs) 
+        rounds.append([(b, w) for (w, b) in pairs])
+
+        barrel = barrel[half - 1:] + barrel[:half - 1]
+
     return rounds
 
 def berger_rounds(num_players):

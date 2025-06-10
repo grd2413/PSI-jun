@@ -219,8 +219,78 @@ class Tournament(models.Model):
     def getPlayersCount(self):
         return len(TournamentPlayers.objects.filter(tournament=self))
     
-    def getOpponents(self):
-        pass
+    def getOpponents(self, scores):
+        players = self.getPlayers()
+        results = {}
+
+        for player in players:
+            opponents = []
+            OTBopponents = []
+            result = []
+            voluntarellyUmplayed = []
+            white_count = 0
+            black_count = 0
+
+            # Obtener todas las partidas jugadas por el jugador
+            games = self._getPlayerGames(player)
+
+            for game in games:
+                # Determinar el oponente
+                if game.white == player:
+                    opponent = game.black
+                    white_count += 1
+                else:
+                    opponent = game.white
+                    black_count += 1
+
+                # Puntos según resultado
+                if game.result == Scores.WHITE:
+                    pt = 1.0 if game.white == player else 0.0
+                elif game.result == Scores.BLACK:
+                    pt = 1.0 if game.black == player else 0.0
+                elif game.result == Scores.DRAW:
+                    pt = 0.5
+                elif game.result in [
+                    Scores.FORFEITWIN, Scores.BYE_F, Scores.BYE_U
+                ]:
+                    if (game.result == Scores.FORFEITWIN and game.white != player):
+                        pt = 0.0
+                    else:
+                        pt = 1.0
+                    if opponent is None:
+                        voluntarellyUmplayed.append(game)
+                elif game.result in [
+                    Scores.BYE_H
+                ]:
+                    pt = 0.5
+                    if opponent is None:
+                        voluntarellyUmplayed.append(game)
+                elif game.result == Scores.FORFEITLOSS:
+                    pt = 0.0
+                    if opponent is None:
+                        voluntarellyUmplayed.append(game)
+                else:
+                    pt = 0.0  # Por defecto
+
+                result.append(pt)
+                if opponent:
+                    opponents.append(opponent)
+                    # OTB si fue realmente jugado entre dos personas
+                    if game.result in [Scores.WHITE, Scores.BLACK, Scores.DRAW]:
+                        OTBopponents.append(opponent)
+                elif opponent is None:
+                    #print(player.name)
+                    opponents.append(player)
+            results[player] = {
+                'opponents': opponents,
+                'OTBopponents': OTBopponents,
+                'result': result,
+                'voluntarellyUmplayed': voluntarellyUmplayed,
+                'colordifference': white_count - black_count
+            }
+            #print(results[player])
+        return results
+
     
     def getBuchholz(self):
         pass
