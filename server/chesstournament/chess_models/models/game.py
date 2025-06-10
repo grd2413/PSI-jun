@@ -85,9 +85,13 @@ def create_rounds(tournament, swissByes=[]):
                     finished=False
                 ))
             rounds.append(current_round)
+    
     elif (tournament.tournament_type == TournamentType.DOUBLEROUNDROBINSAMEDAY):
         rounds_schedule = rb_rounds(num_players)
-        #print(rounds_schedule)
+    
+    elif (tournament.tournament_type == TournamentType.SWISS):
+        return create_swiss_first_round(tournament, swissByes)
+
     return rounds
 
 def rb_rounds(num_players):
@@ -142,6 +146,61 @@ def berger_rounds(num_players):
         rounds.append(pairs)
         barrel = barrel[half-1:] + barrel[:half-1]
     return rounds
+
+
+def create_swiss_first_round(tournament, swissByes=None):
+    if swissByes is None:
+        swissByes = []
+
+    players = list(tournament.getPlayers(sorted=True))
+    players.sort(key=lambda p: p.fide_rating_classical or 0, reverse=True)
+    players_by_id = {p.id: p for p in players}
+    num_players = len(players)
+
+    bye_players = []
+
+    for pid in swissByes:
+        player = players_by_id[pid]
+        bye_players.append((player, Scores.BYE_H))
+
+    all_bye_ids = set(p[0].id for p in bye_players)
+    if (num_players - len(all_bye_ids)) % 2 == 1:
+        candidates = [p for p in reversed(players) if p.id not in all_bye_ids]
+        if candidates:
+            bye_unplayed = candidates[0]
+            bye_players.append((bye_unplayed, Scores.BYE_U))
+            all_bye_ids.add(bye_unplayed.id)
+
+    players_to_pair = [p for p in players if p.id not in all_bye_ids]
+
+    round_instance = Round.objects.create(tournament=tournament, name="Rd 1")
+    games = []
+
+    for player, result in bye_players:
+        print(player, result)
+        games.append(Game.objects.create(
+            white=player,
+            black=None,
+            round=round_instance,
+            result=result,
+            finished=False
+        ))
+
+    players_to_pair.sort(key=lambda p: p.fide_rating_classical or 0, reverse=True)
+    half = len(players_to_pair) // 2
+    for i in range(half):
+        white = players_to_pair[i]
+        black = players_to_pair[i + half]
+        games.append(Game.objects.create(
+            white=white,
+            black=black,
+            round=round_instance,
+            result=Scores.NOAVAILABLE,
+            finished=False
+        ))
+
+    return games
+
 
 class GameSerializer(serializers.ModelSerializer):
     white = serializers.StringRelatedField()

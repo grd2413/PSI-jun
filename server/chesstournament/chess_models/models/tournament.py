@@ -337,8 +337,8 @@ class Tournament(models.Model):
         ranking_system_obj, _ = RankingSystemClass.objects.get_or_create(value=rankingSystem)
         self.rankingList.add(ranking_system_obj)
 
-    def getGamesCount(self, isFinished):
-        return len(Round.objects.filter(tournament=self.id))
+    def getGamesCount(self, finished):
+        return Game.objects.filter(round__tournament=self, finished=finished).count()
 
     def __str__(self):
         return f"tournament_{self.id:02}"
