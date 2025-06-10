@@ -41,15 +41,18 @@ class Tournament(models.Model):
     def getScores(self):
             scores = {player: self._getPlayerDict(player) for player in self.getPlayers()}
             sorted_players = [x for x in scores.keys()]
-            sorted_players.sort(key=cmp_to_key(lambda p1, p2 : self._compareScores(p1, p2, scores)), reverse=True)
+            #sorted_players.sort(key=cmp_to_key(lambda p1, p2 : self._compareScores(p1, p2, scores)), reverse=True)
             return {player: scores[player] for player in sorted_players}
 
     def _getPlayerDict(self, player):
         games = self._getPlayerGames(player)
         wins, draws, loses, blacks = self._getPlayerStats(games, player)
         byes = self._getPlayerSpecialStats(games, player)
-        plain_points = (wins + byes) * self.win_points + draws * self.draw_points + loses * self.lose_points
-        return {RankingSystem.PLAIN_SCORE.value: plain_points}
+        #plain_points = (wins + byes) * self.win_points + draws * self.draw_points + loses * self.lose_points
+        plain_points = wins * self.win_points + draws * self.draw_points + loses * self.lose_points + byes
+        
+        #print("Player: "+ player.name + " b: " + str(byes) + " w: " + str(wins) + " t: " + str(draws) + " l: " + str(loses) + " TOTAL: " + str(plain_points) + "\n")
+        #return {RankingSystem.PLAIN_SCORE.value: plain_points}
         return {RankingSystem.PLAIN_SCORE.value: plain_points,
                 RankingSystem.WINS.value: wins,
                 RankingSystem.BLACKTIMES.value: blacks,
@@ -131,18 +134,46 @@ class Tournament(models.Model):
         return scores
 
     def getPlayers(self, sorted:bool=False):
-        if sorted:
-            queryset = self.players.all()   
-            if self.board_type == TournamentBoardType.LICHESS:
-                if self.tournament_speed == TournamentSpeed.RAPID:
-                    return list(queryset.order_by('lichess_rating_rapid').reverse())
-                elif self.tournament_speed == TournamentSpeed.BLITZ:
-                    return list(queryset.order_by('lichess_rating_blitz').reverse())
-                elif self.tournament_speed == TournamentSpeed.CLASSICAL:
-                    return list(queryset.order_by('lichess_rating_classical').reverse())
-                elif self.tournament_speed == TournamentSpeed.BULLET:
-                    return list(queryset.order_by('lichess_rating_bullet').reverse())
-        return [tournament_player.player for tournament_player in TournamentPlayers.objects.filter(tournament=self)]
+        if not sorted:
+            tournament_players = self.players.filter(tournament=self).order_by('creation_date')
+            return {
+                player: {
+                    'rank': i + 1
+                }
+                for i, player in enumerate(tournament_players)  
+            }
+        
+        queryset = self.players.all()
+        rank = ""
+        if self.board_type == TournamentBoardType.LICHESS:
+            if self.tournament_speed == TournamentSpeed.RAPID:
+                ordered_players = queryset.order_by('lichess_rating_rapid').reverse()
+                rank = 'lichess_rating_rapid'
+            elif self.tournament_speed == TournamentSpeed.BLITZ:
+                ordered_players = queryset.order_by('lichess_rating_blitz').reverse()
+                rank = 'lichess_rating_blitz'
+            elif self.tournament_speed == TournamentSpeed.CLASSICAL:
+                ordered_players = queryset.order_by('lichess_rating_classical').reverse()
+                rank = 'lichess_rating_classical'
+            elif self.tournament_speed == TournamentSpeed.BULLET:
+                ordered_players = queryset.order_by('lichess_rating_bullet').reverse()
+                rank = 'lichess_rating_bullet'
+            else:
+                ordered_players = queryset 
+        
+        elif self.board_type == TournamentBoardType.OTB:
+            if self.tournament_speed == TournamentSpeed.CLASSICAL:
+                ordered_players = queryset.order_by('fide_rating_classical').reverse()
+                rank = 'fide_rating_classical'
+            else:
+                ordered_players = queryset
+        else:
+            ordered_players = queryset
+        # return {
+        #     i : player
+        #     for i, player in enumerate(ordered_players)
+        # }
+        return list(ordered_players)
     
     def getPlayersCount(self):
         return len(TournamentPlayers.objects.filter(tournament=self))

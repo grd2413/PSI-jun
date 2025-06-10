@@ -65,21 +65,31 @@ class Game(models.Model):
         return f"{self.white}({self.white.id}) vs {self.black}({self.black.id}) = {self.result.label}"
     
 def create_rounds(tournament, swissByes=[]):    
-    players = tournament.getPlayers()
+    players = tournament.getPlayers(sorted=True)
     num_players = tournament.getPlayersCount()
+    #print(players[0])
     rounds = []
     rounds_schedule = berger_rounds(num_players)
     for round_number in range(num_players - 1):
         round_instance = Round.objects.create(tournament=tournament, name=f"Rd {round_number+1}")
         current_round = []
         for round_game in range(num_players // 2):
-            current_round += [Game.objects.create(
-                white=players[rounds_schedule[round_number][round_game][0]],
-                black=players[rounds_schedule[round_number][round_game][1]],
+            white_idx = rounds_schedule[round_number][round_game][0]
+            black_idx = rounds_schedule[round_number][round_game][1]
+            current_round.append(Game.objects.create(
+                white=players[white_idx],
+                black=players[black_idx],
                 round=round_instance,
                 result=Scores.NOAVAILABLE,
                 finished=False
-            )]
+            ))
+            # current_round += [Game.objects.create(
+            #     white=players[rounds_schedule[round_number][round_game][0]],
+            #     black=players[rounds_schedule[round_number][round_game][1]],
+            #     round=round_instance,
+            #     result=Scores.NOAVAILABLE,
+            #     finished=False
+            # )]
         rounds.append(current_round)
     return rounds
 
