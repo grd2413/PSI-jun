@@ -177,7 +177,6 @@ def create_swiss_first_round(tournament, swissByes=None):
     games = []
 
     for player, result in bye_players:
-        print(player, result)
         games.append(Game.objects.create(
             white=player,
             black=None,

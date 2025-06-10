@@ -39,17 +39,7 @@ class Tournament(models.Model):
     rankingList = models.ManyToManyField(RankingSystemClass, blank=True)
 
     def getScores(self):
-        # results = {}
-        # PLAIN_SCORE = RankingSystem.PLAIN_SCORE.value
-        # scores = {player: self._getPlayerDict(player) for player in self.getPlayers()}
-        # players = Tournament.getPlayers(self, sorted=True)
-        # for player in players:
-        #     results[player] = {}
-        #     results[player][PLAIN_SCORE] = scores[player]['PS']
-        # return results
         scores = {player: self._getPlayerDict(player) for player in self.getPlayers()}
-        #sorted_players = [x for x in scores.keys()]
-        #sorted_players.sort(key=cmp_to_key(lambda p1, p2 : self._compareScores(p1, p2, scores)), reverse=True)
         return {player: scores[player] for player in scores}
 
     def _getPlayerDict(self, player):
@@ -68,7 +58,6 @@ class Tournament(models.Model):
             }
     
     def _compareScores(self, p1, p2, scores):
-        # for key in [x.value for x in self.getRankingList()]:
         for key in scores[p1].keys():
             if scores[p1][key] > scores[p2][key]:
                 return 1
@@ -84,23 +73,6 @@ class Tournament(models.Model):
                     games.append(game)
         return games
     
-    # def _getPlayerStats(self, games, player):
-    #     wins, draws, loses, blacks = 0, 0, 0, 0 
-    #     for game in games:
-    #         if game.result == Scores.DRAW:
-    #             draws+=1
-    #         elif game.white == player:
-    #             if game.result == Scores.WHITE:
-    #                 wins+=1
-    #             else:
-    #                 loses+=1
-    #         elif game.black == player:
-    #             blacks+=1
-    #             if game.result == Scores.BLACK:
-    #                 wins+=1    
-    #             else:
-    #                 loses+=1
-    #     return wins, draws, loses, blacks
     def _getPlayerStats(self, games, player):
         wins, draws, loses, blacks = 0, 0, 0, 0
         for game in games:
@@ -146,7 +118,6 @@ class Tournament(models.Model):
 
     def getBlackWins(self, scores):
         for player in scores.keys():
-            #print(player, self._getBlackWins(player),  self._getPlayerWins(player))
             scores[player][RankingSystem.BLACKTIMES.value] = 0
             scores[player][RankingSystem.WINS.value] = 0
         return scores
@@ -210,10 +181,6 @@ class Tournament(models.Model):
                 ordered_players = queryset
         else:
             ordered_players = queryset
-        # return {
-        #     i : player
-        #     for i, player in enumerate(ordered_players)
-        # }
         return list(ordered_players)
     
     def getPlayersCount(self):
@@ -231,55 +198,54 @@ class Tournament(models.Model):
             white_count = 0
             black_count = 0
 
-            # Obtener todas las partidas jugadas por el jugador
             games = self._getPlayerGames(player)
 
             for game in games:
-                # Determinar el oponente
-                if game.white == player:
-                    opponent = game.black
-                    white_count += 1
-                else:
-                    opponent = game.white
-                    black_count += 1
+                is_white = game.white == player
+                is_black = game.black == player
 
-                # Puntos según resultado
+                if is_white:
+                    opponent = game.black
+                    if (game.black is not None and game.result != Scores.FORFEITWIN):
+                        white_count += 1
+                elif is_black:
+                    opponent = game.white
+                    if (game.result != Scores.FORFEITWIN):
+                        black_count += 1
+                else:
+                    continue
+
                 if game.result == Scores.WHITE:
-                    pt = 1.0 if game.white == player else 0.0
+                    pt = 1.0 if is_white else 0.0
                 elif game.result == Scores.BLACK:
-                    pt = 1.0 if game.black == player else 0.0
+                    pt = 1.0 if is_black else 0.0
                 elif game.result == Scores.DRAW:
                     pt = 0.5
-                elif game.result in [
-                    Scores.FORFEITWIN, Scores.BYE_F, Scores.BYE_U
-                ]:
-                    if (game.result == Scores.FORFEITWIN and game.white != player):
-                        pt = 0.0
-                    else:
-                        pt = 1.0
-                    if opponent is None:
-                        voluntarellyUmplayed.append(game)
-                elif game.result in [
-                    Scores.BYE_H
-                ]:
+                elif game.result == Scores.FORFEITWIN:
+                    pt = 1.0 if (is_white) else 0.0
+                    if opponent is not None:
+                        if (is_black):
+                            voluntarellyUmplayed.append(player)
+                        opponent = player
+                elif game.result in [Scores.BYE_F, Scores.BYE_U]:
+                    pt = 1.0
+                elif game.result == Scores.BYE_H:
                     pt = 0.5
                     if opponent is None:
-                        voluntarellyUmplayed.append(game)
-                elif game.result == Scores.FORFEITLOSS:
+                        voluntarellyUmplayed.append(player)
+                elif game.result == Scores.FORFEITLOSS or game.result == Scores.BYE_Z:
                     pt = 0.0
                     if opponent is None:
-                        voluntarellyUmplayed.append(game)
+                        voluntarellyUmplayed.append(player)
                 else:
-                    pt = 0.0  # Por defecto
+                    pt = 0.0
 
                 result.append(pt)
                 if opponent:
                     opponents.append(opponent)
-                    # OTB si fue realmente jugado entre dos personas
                     if game.result in [Scores.WHITE, Scores.BLACK, Scores.DRAW]:
                         OTBopponents.append(opponent)
-                elif opponent is None:
-                    #print(player.name)
+                else:
                     opponents.append(player)
             results[player] = {
                 'opponents': opponents,
@@ -288,14 +254,15 @@ class Tournament(models.Model):
                 'voluntarellyUmplayed': voluntarellyUmplayed,
                 'colordifference': white_count - black_count
             }
-            #print(results[player])
+
         return results
+
 
     
     def getBuchholz(self):
         pass
     
-    def getAdjustedScores(self):
+    def getAdjustedScores(self, playersList):
         pass
     
     def getBuchholzCutMinusOne(self):
