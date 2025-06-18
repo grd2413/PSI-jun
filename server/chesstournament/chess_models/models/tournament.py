@@ -117,14 +117,25 @@ class Tournament(models.Model):
 
     def getBlackWins(self, scores):
         for player in scores.keys():
-            scores[player][RankingSystem.BLACKTIMES.value] = 0
-            scores[player][RankingSystem.WINS.value] = 0
+            # scores[player][RankingSystem.BLACKTIMES.value] = 0
+            # scores[player][RankingSystem.WINS.value] = 0
+            scores[player][RankingSystem.BLACKTIMES] = self._getBlackTimes(player)
+            scores[player][RankingSystem.WINS] = self._getPlayerWins(player)
         return scores
+    
+
+    def _getBlackTimes(self, player):
+        blackTimes = 0
+        for game in self._getPlayerGames(player):
+            if game.black == player and game.result != Scores.FORFEITWIN:
+                blackTimes += 1
+        return blackTimes
+
     
     def _getBlackWins(self, player):
         blackWins = 0
         for game in self._getPlayerGames(player):
-            if game.black == player and game.result == Scores.BLACK:
+            if game.black == player and (game.result == Scores.BLACK):
                 blackWins += 1
         return blackWins
 
@@ -139,8 +150,17 @@ class Tournament(models.Model):
     def getRanking(self):
 
         buchholz_in_ranking = any(rs.value == 'BU' for rs in self.getRankingList())
+        buchholzcut1_in_ranking = any(rs.value == 'BC' for rs in self.getRankingList())
 
-        if (buchholz_in_ranking):
+        if (buchholzcut1_in_ranking):
+            scores = {}
+            scores = self.getBuchholzCutMinusOne(self.getAdjustedScores(self.getOpponents(scores)))
+            ranked_players = sorted(
+                scores.keys(),
+                key=lambda p: (scores[p][RankingSystem.BUCHHOLZ_CUT1], scores[p][RankingSystem.PLAIN_SCORE]),
+                reverse=True
+            )
+        elif (buchholz_in_ranking):
             scores = {}
             scores = self.getBuchholz(self.getAdjustedScores(self.getOpponents(scores)))
             ranked_players = sorted(
@@ -297,16 +317,8 @@ class Tournament(models.Model):
             }
             
         return buchholz_scores
-
-    def _updatePlayerDict(self, scores):
-        scoresBuchholz = self.getBuchholz(self.getAdjustedScores)
-        
-        for player in scores.keys():
-            scores[player][RankingSystem.BUCHHOLZ] = scoresBuchholz[player][RankingSystem.BUCHHOLZ]
-
-        return scores
-
     
+
     def getAdjustedScores(tournament, playersList):
 
         adjustedScores = {}
@@ -329,8 +341,50 @@ class Tournament(models.Model):
         return adjustedScores
 
     
-    def getBuchholzCutMinusOne(self):
-        pass
+    def getBuchholzCutMinusOne(self, getAdjustedScoresList):
+        scores = self.getScores()
+        playersList = self.getOpponents(scores)
+        buchholz_scores = self.getBuchholz(getAdjustedScoresList)
+
+        buchholzc1_scores = {}
+
+        for player, data in playersList.items():
+            opponents = data['opponents']
+            opponent_scores = []
+            volunplayed = 0
+
+            for opponent in opponents:
+                if opponent and opponent != player:
+                    score = getAdjustedScoresList[opponent]['adjustedScore']
+                    opponent_scores.append(score)
+                elif opponent == player:
+                    if (len(playersList[player]['voluntarellyUmplayed']) == 0):
+                        opponent_scores.append(scores[opponent]['PS'])
+                    else:
+                        volunplayed += 1
+                        if (volunplayed > 1):
+                            opponent_scores.append(scores[opponent]['PS'])
+                        else:
+                            opponent_scores.append(0.0)
+
+            non_zero_scores = [s for s in opponent_scores if s != 0.0]
+
+            if len(non_zero_scores) > 4:
+                opponent_scores.remove(min(non_zero_scores))
+
+            total = sum(opponent_scores)
+
+            buchholzc1_scores[player] = {
+                'PS': scores.get(player, {}).get('PS', 0.0),
+                RankingSystem.WINS.value: self._getPlayerWins(player),
+                RankingSystem.BLACKTIMES.value: self._getBlackTimes(player),
+                RankingSystem.PLAIN_SCORE: scores.get(player, {}).get(RankingSystem.PLAIN_SCORE, 0.0),
+                'adjustedScore': getAdjustedScoresList[player]['adjustedScore'],
+                RankingSystem.BUCHHOLZ: buchholz_scores[player][RankingSystem.BUCHHOLZ],
+                RankingSystem.BUCHHOLZ_CUT1: total,
+            }
+
+        return buchholzc1_scores
     
     def getMediamBuchholz(self):
         pass
@@ -367,6 +421,10 @@ class Tournament(models.Model):
     def addToRankingList(self, rankingSystem: RankingSystem):
         ranking_system_obj, _ = RankingSystemClass.objects.get_or_create(value=rankingSystem)
         self.rankingList.add(ranking_system_obj)
+
+    def removeFromRankingList(self, rankingSystem: RankingSystem):
+        ranking_system_obj, _ = RankingSystemClass.objects.get_or_create(value=rankingSystem)
+        self.rankingList.remove(ranking_system_obj)
 
     def getGamesCount(self, finished):
         return Game.objects.filter(round__tournament=self, finished=finished).count()
