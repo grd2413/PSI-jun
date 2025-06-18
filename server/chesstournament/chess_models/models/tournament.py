@@ -50,7 +50,6 @@ class Tournament(models.Model):
         plain_points = wins * self.win_points + draws * self.draw_points + loses * self.lose_points + byes
         
         #print("Player: "+ player.name + " b: " + str(byes) + " w: " + str(wins) + " t: " + str(draws) + " l: " + str(loses) + " TOTAL: " + str(plain_points) + "\n")
-        
         return {RankingSystem.PLAIN_SCORE.value: plain_points,
                 RankingSystem.WINS.value: wins,
                 RankingSystem.BLACKTIMES.value: blacks,
@@ -138,11 +137,24 @@ class Tournament(models.Model):
         return wins
     
     def getRanking(self):
-        scores = self.getScores()
-        ranked_players = [x for x in scores.keys()]
-        #ranked_players.sort(key=cmp_to_key(lambda p1, p2 : self._compareScores(p1, p2, scores)), reverse=True)
-        for i in range(len(ranked_players)):
-            scores[ranked_players[i]][RANK] = i + 1
+
+        buchholz_in_ranking = any(rs.value == 'BU' for rs in self.getRankingList())
+
+        if (buchholz_in_ranking):
+            scores = {}
+            scores = self.getBuchholz(self.getAdjustedScores(self.getOpponents(scores)))
+            ranked_players = sorted(
+                scores.keys(),
+                key=lambda p: (scores[p][RankingSystem.BUCHHOLZ], scores[p][RankingSystem.PLAIN_SCORE]),
+                reverse=True
+            )
+        else:
+            scores = self.getScores()
+            ranked_players = list(scores.keys())
+
+        for i, player in enumerate(ranked_players):
+            scores[player][RANK] = i + 1
+
         return scores
 
     def getPlayers(self, sorted:bool=False):
@@ -259,8 +271,41 @@ class Tournament(models.Model):
 
 
     
-    def getBuchholz(self):
-        pass
+    def getBuchholz(tournament, adjustedScores):
+        scores = tournament.getScores()
+        playersList = tournament.getOpponents(scores)
+
+        buchholz_scores = {}
+
+        for player, data in playersList.items():
+            opponents = data['opponents']
+            total = 0
+
+            for opponent in opponents:
+                if opponent and opponent != player:
+                    opponent_score = adjustedScores[opponent]['adjustedScore']
+                elif opponent == player:
+                    opponent_score = scores[opponent]['PS']
+                
+                total += opponent_score
+
+            buchholz_scores[player] = {
+                'PS': scores.get(player, {}).get('PS', 0.0),
+                RankingSystem.PLAIN_SCORE: scores.get(player, {}).get(RankingSystem.PLAIN_SCORE, 0.0),
+                'adjustedScore': adjustedScores[player]['adjustedScore'],
+                RankingSystem.BUCHHOLZ: total,
+            }
+            
+        return buchholz_scores
+
+    def _updatePlayerDict(self, scores):
+        scoresBuchholz = self.getBuchholz(self.getAdjustedScores)
+        
+        for player in scores.keys():
+            scores[player][RankingSystem.BUCHHOLZ] = scoresBuchholz[player][RankingSystem.BUCHHOLZ]
+
+        return scores
+
     
     def getAdjustedScores(tournament, playersList):
 
