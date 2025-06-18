@@ -26,7 +26,7 @@ urlpatterns = [
     # Endpoints adicionales
     path('create_round/', CreateRoundAPIView.as_view(), name='create_round'),
     path('searchTournaments/', SearchTournamentsAPIView.as_view(), name='search_tournaments'),
-    path('tournament_create/', TournamentCreateAPIView.as_view(), name='tournament_create'),
+    path('tournaments/', TournamentCreateAPIView.as_view(), name='tournament_create'),
     path('get_ranking/<int:tournament_id>/', GetRanking.as_view(), name='get_ranking'),
     path('get_players/<int:tournament_id>/', GetPlayers.as_view(), name='get_players'),
     path('get_round_results/<int:tournament_id>/', GetRoundResults.as_view(), name='get_round_results'),

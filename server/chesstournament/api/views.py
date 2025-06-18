@@ -1,3 +1,4 @@
+from chess_models.models.player import Player
 import djoser
 from djoser.views import UserViewSet
 from rest_framework.views import APIView
@@ -21,6 +22,7 @@ class TournamentViewSet(viewsets.ModelViewSet):
     queryset = Tournament.objects.all().order_by('-start_date', '-id')
     serializer_class = TournamentSerializer
     pagination_class = CustomPagination
+    permission_classes = [permissions.IsAuthenticated]
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -105,9 +107,58 @@ class SearchTournamentsAPIView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class TournamentCreateAPIView(APIView):
-    def post(self, request, format=None):
+    queryset = Tournament.objects.all()
+    serializer_class = TournamentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    def post(self, request):
+        try:
+            name = request.data.get("name")
+            tournament_type = request.data.get("tournament_type")
+            tournament_speed = request.data.get("tournament_speed")
+            board_type = request.data.get("board_type")
+            players_text = request.data.get("players", "")
 
-        return Response({"detail": "Not implemented"}, status=status.HTTP_501_NOT_IMPLEMENTED)
+            # Validaciones básicas
+            if not all([name, tournament_type, tournament_speed, board_type]):
+                return Response(
+                    {"error": "Missing required fields."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            tournament = Tournament.objects.create(
+                name=name,
+                tournament_type=tournament_type,
+                tournament_speed=tournament_speed,
+                board_type=board_type,
+                created_by=request.user,
+            )
+
+            # Parsear los jugadores
+            lines = players_text.strip().split("\n")
+            if len(lines) > 1 and lines[0].strip().lower() == "lichess_username":
+                usernames = lines[1:]
+            else:
+                usernames = lines
+
+            for username in usernames:
+                Player.objects.create(
+                    tournament=tournament,
+                    lichess_username=username.strip()
+                )
+
+            return Response(
+                {"success": True, "tournament_id": tournament.id},
+                status=status.HTTP_201_CREATED
+            )
+
+        except Exception as e:
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    # def post(self, request, format=None):
+
+    #     return Response({"detail": "Not implemented"}, status=status.HTTP_501_NOT_IMPLEMENTED)
 
 class GetRanking(APIView):
     def get(self, request, tournament_id, format=None):

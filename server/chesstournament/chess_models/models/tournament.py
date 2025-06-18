@@ -447,32 +447,48 @@ class RankingSystemClassSerializer(serializers.ModelSerializer):
         fields = ['value']
 
 class TournamentSerializer(serializers.ModelSerializer):
+    players = serializers.CharField(write_only=True)
 
-    players = serializers.SerializerMethodField()
-    rankingList = RankingSystemClassSerializer(many=True, read_only=True)
-    
     class Meta:
         model = Tournament
-        fields = [
-            'id',
-            'name',
-            'administrativeUser',
-            'players',
-            'referee',
-            'start_date',
-            'end_date',
-            'max_update_time',
-            'only_administrative',
-            'tournament_type',
-            'tournament_speed',
-            'board_type',
-            'win_points',
-            'draw_points',
-            'lose_points',
-            'timeControl',
-            'number_of_rounds_for_swiss',
-            'rankingList'
-        ]
+        fields = ['name', 'tournament_type', 'tournament_speed', 'board_type', 'players']
+
+    def create(self, validated_data):
+        players_raw = validated_data.pop('players')
+        tournament = Tournament.objects.create(**validated_data)
+
+        usernames = [line.strip() for line in players_raw.strip().split('\n') if line.strip() and line.strip() != 'lichess_username']
+
+        for username in usernames:
+            player = Player.objects.get(lichess_username=username)
+            tournament.players.add(player)
+
+        return tournament
+    # players = serializers.SerializerMethodField()
+    # rankingList = RankingSystemClassSerializer(many=True, read_only=True)
     
-    def get_players(self, obj):
-        return [str(player) for player in obj.getPlayers()]
+    # class Meta:
+    #     model = Tournament
+    #     fields = [
+    #         'id',
+    #         'name',
+    #         'administrativeUser',
+    #         'players',
+    #         'referee',
+    #         'start_date',
+    #         'end_date',
+    #         'max_update_time',
+    #         'only_administrative',
+    #         'tournament_type',
+    #         'tournament_speed',
+    #         'board_type',
+    #         'win_points',
+    #         'draw_points',
+    #         'lose_points',
+    #         'timeControl',
+    #         'number_of_rounds_for_swiss',
+    #         'rankingList'
+    #     ]
+    
+    # def get_players(self, obj):
+    #     return [str(player) for player in obj.getPlayers()]
