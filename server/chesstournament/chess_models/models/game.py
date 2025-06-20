@@ -208,14 +208,15 @@ class GameSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Game
-        fields = [
-            'id',
-            'white',
-            'black',
-            'finished',
-            'round',
-            'start_date',
-            'update_date',
-            'result',
-            'rankingOrder'
-        ]
+        fields = '__all__'
+        # fields = [
+        #     'id',
+        #     'white',
+        #     'black',
+        #     'finished',
+        #     'round',
+        #     'start_date',
+        #     'update_date',
+        #     'result',
+        #     'rankingOrder'
+        # ]

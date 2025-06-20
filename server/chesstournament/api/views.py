@@ -1,3 +1,4 @@
+from django.shortcuts import get_object_or_404
 from chess_models.models.player import Player
 import djoser
 from djoser.views import UserViewSet
@@ -5,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework import status, permissions
 from rest_framework.permissions import AllowAny
 
@@ -38,13 +39,7 @@ class CustomUserViewSet(UserViewSet):
 class GameViewSet(viewsets.ModelViewSet):
     queryset = Game.objects.all()
     serializer_class = GameSerializer
-
-    def get_permissions(self):
-        if self.action == 'update':
-            self.permission_classes = []  #Permitir sin login
-        else:
-            self.permission_classes = [IsAuthenticated]
-        return super().get_permissions()
+    permission_classes = [IsAuthenticatedOrReadOnly]
 
     def update(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -57,6 +52,42 @@ class GameViewSet(viewsets.ModelViewSet):
         instance.save()
 
         return response
+
+
+class CreateGameAPIView(APIView):
+    queryset = Game.objects.all()
+    serializer_class = GameSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def post(self, request):
+        serializer = GameSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class UpdateGameAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def patch(self, request, num):
+        game = get_object_or_404(Game, id=num)
+
+        if game.finished and not request.user.is_authenticated:
+            return Response(
+                {"detail": "Authentication required to modify a finished game."},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        partial_data = request.data.copy()
+        if 'result' in partial_data:
+            partial_data['finished'] = True
+
+        serializer = GameSerializer(game, data=partial_data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class CreateRoundAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]

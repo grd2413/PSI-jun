@@ -1,6 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
+    CreateGameAPIView,
     TournamentViewSet,
     CustomUserViewSet,
     GameViewSet,
@@ -10,6 +11,7 @@ from .views import (
     GetRanking,
     GetPlayers,
     GetRoundResults,
+    UpdateGameAPIView,
     UpdateLichessGameAPIView,
     UpdateOTBGameAPIView,
     AdminUpdateGameAPIView,
@@ -26,6 +28,8 @@ urlpatterns = [
     # Endpoints adicionales
     path('create_round/', CreateRoundAPIView.as_view(), name='create_round'),
     path('searchTournaments/', SearchTournamentsAPIView.as_view(), name='search_tournaments'),
+    path('games/', CreateGameAPIView.as_view(), name='create-game'),
+    path('games/<int:num>/', UpdateGameAPIView.as_view(), name='update_game'),
     path('tournaments/', TournamentCreateAPIView.as_view(), name='tournament_create'),
     path('get_ranking/<int:tournament_id>/', GetRanking.as_view(), name='get_ranking'),
     path('get_players/<int:tournament_id>/', GetPlayers.as_view(), name='get_players'),
