@@ -451,8 +451,27 @@ class TournamentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Tournament
-        fields = ['name', 'tournament_type', 'tournament_speed', 'board_type', 'players']
-
+        fields = [
+            'id',
+            'name',
+            'administrativeUser',
+            'players',
+            'referee',
+            'start_date',
+            'end_date',
+            'max_update_time',
+            'only_administrative',
+            'tournament_type',
+            'tournament_speed',
+            'board_type',
+            'win_points',
+            'draw_points',
+            'lose_points',
+            'timeControl',
+            'number_of_rounds_for_swiss',
+            'rankingList'
+        ]
+        
     def create(self, validated_data):
         players_raw = validated_data.pop('players')
         tournament = Tournament.objects.create(**validated_data)

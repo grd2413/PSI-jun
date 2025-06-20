@@ -7,6 +7,7 @@ from rest_framework import viewsets
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status, permissions
+from rest_framework.permissions import AllowAny
 
 
 from chess_models.models.tournament import Tournament, TournamentSerializer
@@ -101,15 +102,29 @@ class SearchTournamentsAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Se filtran los torneos cuyo nombre contenga el string de búsqueda (ajusta la lógica según sea necesario)
-        tournaments = Tournament.objects.filter(name__icontains=search_string)
+        tournaments = Tournament.objects.filter(name__icontains=search_string).order_by('-name') 
         serializer = TournamentSerializer(tournaments, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class TournamentCreateAPIView(APIView):
     queryset = Tournament.objects.all()
     serializer_class = TournamentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    #permission_classes = [permissions.IsAuthenticated]
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [IsAuthenticated()]
+
+    def get(self, request):
+        tournaments = Tournament.objects.all().order_by('-id')
+        paginator = PageNumberPagination()
+        paginator.page_size = 10 
+        result_page = paginator.paginate_queryset(tournaments, request)
+        serializer = TournamentSerializer(result_page, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+        
+
     def post(self, request):
         try:
             name = request.data.get("name")
@@ -117,6 +132,7 @@ class TournamentCreateAPIView(APIView):
             tournament_speed = request.data.get("tournament_speed")
             board_type = request.data.get("board_type")
             players_text = request.data.get("players", "")
+            start_date = request.data.get("start_date", "")
 
             # Validaciones básicas
             if not all([name, tournament_type, tournament_speed, board_type]):
@@ -130,7 +146,7 @@ class TournamentCreateAPIView(APIView):
                 tournament_type=tournament_type,
                 tournament_speed=tournament_speed,
                 board_type=board_type,
-                created_by=request.user,
+                start_date=start_date,
             )
 
             # Parsear los jugadores
@@ -156,10 +172,7 @@ class TournamentCreateAPIView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-    # def post(self, request, format=None):
-
-    #     return Response({"detail": "Not implemented"}, status=status.HTTP_501_NOT_IMPLEMENTED)
-
+        
 class GetRanking(APIView):
     def get(self, request, tournament_id, format=None):
 
