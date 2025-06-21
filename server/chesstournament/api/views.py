@@ -347,9 +347,8 @@ class UpdateOTBGameAPIView(APIView):
             return Response({"result": False, "message": "Game already finished"},
                             status=status.HTTP_400_BAD_REQUEST)
 
-        white_player = game.white
-
-        if white_player.name != name or white_player.email != email:
+        if not ((game.white.name == name and game.white.email == email) or
+                (game.black.name == name and game.black.email == email)):
             return Response({"result": False, "message": "Player authentication failed"},
                             status=status.HTTP_403_FORBIDDEN)
 
