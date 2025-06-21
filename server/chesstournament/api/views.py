@@ -11,6 +11,7 @@ from rest_framework import status, permissions
 from rest_framework.permissions import AllowAny
 
 
+from chess_models.models.round import Round
 from chess_models.models.tournament import Tournament, TournamentSerializer
 from chess_models.models.game import Game, GameSerializer, create_rounds
 from chess_models.models.other_models import LichessAPIError
@@ -59,13 +60,38 @@ class CreateGameAPIView(APIView):
     serializer_class = GameSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
+    permission_classes = [permissions.IsAuthenticated]
+
     def post(self, request):
-        serializer = GameSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
+        try:
+            white_id = request.data.get("white")
+            black_id = request.data.get("black")
+            round_id = request.data.get("round")
+
+            if not white_id or not black_id or not round_id:
+                return Response({"detail": "Missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                white = Player.objects.get(id=white_id)
+                black = Player.objects.get(id=black_id)
+            except Player.DoesNotExist:
+                return Response({"detail": "Player not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+            round_obj, created = Round.objects.get_or_create(id=round_id)
+
+            game = Game(white=white, black=black, round=round_obj)
+            game.save()
+
+            serializer = GameSerializer(game)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+        except Exception as e:
+            return Response(
+                {"detail": f"Unexpected error: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
 class UpdateGameAPIView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -93,31 +119,55 @@ class CreateRoundAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request):
-        # Obtenemos el tournament_id de los datos de la petición
         try:
             tournament_id = int(request.data.get('tournament_id'))
         except (TypeError, ValueError):
             return Response({"result": False}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Se intenta obtener el torneo, si no existe se responde con error
         try:
             tournament = Tournament.objects.get(id=tournament_id)
         except Tournament.DoesNotExist:
             return Response({"result": False}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Validamos que el torneo tenga jugadores registrados
         if tournament.getPlayersCount() == 0:
             return Response({"result": False}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Llamada a la función para crear rondas y juegos
         create_rounds(tournament, [])
 
-        # Verificar que se hayan creado rondas y juegos exitosamente.
-        # Aquí se debe implementar la validación correspondiente. Ejemplo:
-        if not tournament.rounds.exists():
+        rounds_created = tournament.round_set.count()
+        games_created = tournament.getGamesCount(finished=False)
+
+        if rounds_created == 0 or games_created == 0:
             return Response({"result": False}, status=status.HTTP_400_BAD_REQUEST)
 
         return Response({"result": True}, status=status.HTTP_201_CREATED)
+
+    # def post(self, request):
+    #     # Obtenemos el tournament_id de los datos de la petición
+    #     try:
+    #         tournament_id = int(request.data.get('tournament_id'))
+    #     except (TypeError, ValueError):
+    #         return Response({"result": False}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     # Se intenta obtener el torneo, si no existe se responde con error
+    #     try:
+    #         tournament = Tournament.objects.get(id=tournament_id)
+    #     except Tournament.DoesNotExist:
+    #         return Response({"result": False}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     # Validamos que el torneo tenga jugadores registrados
+    #     if tournament.getPlayersCount() == 0:
+    #         return Response({"result": False}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     # Llamada a la función para crear rondas y juegos
+    #     create_rounds(tournament, [])
+
+    #     # Verificar que se hayan creado rondas y juegos exitosamente.
+    #     # Aquí se debe implementar la validación correspondiente. Ejemplo:
+    #     if not tournament.rounds.exists():
+    #         return Response({"result": False}, status=status.HTTP_400_BAD_REQUEST)
+
+    #     return Response({"result": True}, status=status.HTTP_201_CREATED)
 
 class SearchTournamentsAPIView(APIView):
     permission_classes = []
@@ -165,7 +215,6 @@ class TournamentCreateAPIView(APIView):
             players_text = request.data.get("players", "")
             start_date = request.data.get("start_date", "")
 
-            # Validaciones básicas
             if not all([name, tournament_type, tournament_speed, board_type]):
                 return Response(
                     {"error": "Missing required fields."},
@@ -180,7 +229,6 @@ class TournamentCreateAPIView(APIView):
                 start_date=start_date,
             )
 
-            # Parsear los jugadores
             lines = players_text.strip().split("\n")
             if len(lines) > 1 and lines[0].strip().lower() == "lichess_username":
                 usernames = lines[1:]
@@ -270,6 +318,42 @@ class UpdateOTBGameAPIView(APIView):
         return Response({"detail": "Not implemented"}, status=status.HTTP_501_NOT_IMPLEMENTED)
 
 class AdminUpdateGameAPIView(APIView):
-    def put(self, request, format=None):
+    permission_classes = [IsAuthenticated]
 
-        return Response({"detail": "Not implemented"}, status=status.HTTP_501_NOT_IMPLEMENTED)
+    def post(self, request, format=None):
+        user = request.user
+        game_id = request.data.get('game_id')
+        new_result = request.data.get('otb_result')
+
+        if not game_id or not new_result:
+            return Response(
+                {"result": False, "message": "Missing game_id or otb_result"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            game = Game.objects.get(id=game_id)
+        except Game.DoesNotExist:
+            return Response(
+                {"result": False, "message": "Game not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        tournament = game.round.tournament
+
+        if tournament.administrativeUser != user:
+            return Response(
+                {
+                    "result": False,
+                    "message": "Only the user that create the tournament can update it"
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        game.result = new_result
+        game.save()
+
+        return Response(
+            {"result": True, "message": "Game updated successfully"},
+            status=status.HTTP_200_OK
+        )

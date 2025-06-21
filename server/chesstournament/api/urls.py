@@ -25,7 +25,7 @@ router.register(r'game', GameViewSet, basename='game')
 urlpatterns = [
     path('', include(router.urls)),
     
-    # Endpoints adicionales
+    # Endpoints
     path('create_round/', CreateRoundAPIView.as_view(), name='create_round'),
     path('searchTournaments/', SearchTournamentsAPIView.as_view(), name='search_tournaments'),
     path('games/', CreateGameAPIView.as_view(), name='create-game'),

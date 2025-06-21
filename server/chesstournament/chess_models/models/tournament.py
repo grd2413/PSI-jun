@@ -428,6 +428,9 @@ class Tournament(models.Model):
 
     def getGamesCount(self, finished):
         return Game.objects.filter(round__tournament=self, finished=finished).count()
+    
+    def getGames(self):
+        return Game.objects.filter(round__tournament=self)
 
     def __str__(self):
         return f"tournament_{self.id:02}"
