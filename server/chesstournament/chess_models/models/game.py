@@ -33,22 +33,21 @@ class Game(models.Model):
             white_player_lichess = data['players']['white']['userId']
             black_player_lichess = data['players']['black']['userId']
 
-            white_player = self.white.lichess_username
-            black_player = self.black.lichess_username
+            white_player = self.white.lichess_username.lower()
+            black_player = self.black.lichess_username.lower()
 
             if white_player != white_player_lichess or black_player != black_player_lichess:
                 raise LichessAPIError(f"Los jugadores no coinciden con los datos de Lichess. Game id: {game_id}")
 
-            winner = data['winner']
+            winner = data.get('winner')
             self.finished = True
             if winner == 'white':
                 result = Scores.WHITE
             elif winner == 'black':
                 result = Scores.BLACK
-            elif winner == 'draw':
+            elif winner is None:
                 result = Scores.DRAW
             else:
-                self.finished = False
                 result = Scores.NOAVAILABLE
 
             self.result = result
