@@ -170,7 +170,14 @@ class Tournament(models.Model):
             )
         else:
             scores = self.getScores()
-            ranked_players = list(scores.keys())
+            ranked_players = sorted(
+                scores.keys(),
+                key=lambda p: (
+                    scores[p].get(RankingSystem.PLAIN_SCORE, 0),
+                    scores[p].get(RankingSystem.WINS.value, 0)
+                ),
+                reverse=True
+            )
 
         for i, player in enumerate(ranked_players):
             scores[player][RANK] = i + 1
