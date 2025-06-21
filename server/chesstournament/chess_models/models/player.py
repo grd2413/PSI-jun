@@ -2,6 +2,7 @@ from django.forms import ValidationError
 import requests
 from django.db import models
 from.other_models import LichessAPIError
+from rest_framework import serializers
 
 
 class Player(models.Model):
@@ -87,3 +88,9 @@ class Player(models.Model):
         if self.lichess_username:
             return self.lichess_username
         return self.name
+
+
+class PlayerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Player
+        fields = ['lichess_username']

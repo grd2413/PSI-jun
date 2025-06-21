@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from chess_models.models.player import Player
+from chess_models.models.player import Player, PlayerSerializer
 import djoser
 from djoser.views import UserViewSet
 from rest_framework.views import APIView
@@ -242,7 +242,7 @@ class TournamentCreateAPIView(APIView):
                 )
 
             return Response(
-                {"success": True, "tournament_id": tournament.id},
+                {"success": True, "id": tournament.id},
                 status=status.HTTP_201_CREATED
             )
 
@@ -259,8 +259,14 @@ class GetRanking(APIView):
 
 class GetPlayers(APIView):
     def get(self, request, tournament_id, format=None):
+        try:
+            tournament = Tournament.objects.get(id=tournament_id)
+        except Tournament.DoesNotExist:
+            return Response({"detail": "Tournament not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        return Response({"detail": "Not implemented"}, status=status.HTTP_501_NOT_IMPLEMENTED)
+        players = tournament.players.all()
+        serializer = PlayerSerializer(players, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class GetRoundResults(APIView):
     def get(self, request, tournament_id, format=None):
