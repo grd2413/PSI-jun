@@ -10,7 +10,7 @@
               v-model="username"
               type="text"
               class="form-control"
-              data-cy="user"
+              data-cy="username"
               :class="{ 'is-invalid': procesando && invalidUser }"
               @focus="resetEstado"
               placeholder="User"
@@ -39,7 +39,7 @@
       <div class="row">
         <div class="col-md-4 mt-4">
           <div class="form-group">
-            <button class="btn btn-primary" data-cy="add-button">Login</button>
+            <button class="btn btn-primary" data-cy="login-button">Login</button>
           </div>
         </div>
       </div>
@@ -49,11 +49,12 @@
         <div class="row">
           <div class="col-md-12">
             <div
-              v-if="error && procesando"
+              v-if="error"
               class="alert alert-danger"
               role="alert"
+              data-cy="error-message"
             >
-              Debes rellenar todos los campos!
+              {{ errorMessage }}
             </div>
           </div>
         </div>
@@ -77,49 +78,92 @@ defineOptions({
 const procesando = ref(false);
 const correcto = ref(false);
 const error = ref(false);
+const errorMessage = ref("");
 
 const username = ref("");
 const password = ref("");
 const invalidUser = computed(() => username.value.length < 1);
 const invalidPassword = computed(() => password.value.length < 1);
 
+// const sendLoginForm = async () => {
+//   procesando.value = true;
+//   correcto.value = false;
+//   error.value = false;
+
+//   if (invalidUser.value || invalidPassword.value) {
+//     error.value = true;
+//     return;
+//   }
+//   try {
+//     const admin = {
+//       username: username.value,
+//       password: password.value,
+//     };
+
+//     const response = await fetch("http://127.0.0.1:8000/api/v1/token/login/", {
+//       method: "POST",
+//       body: JSON.stringify(admin),
+//       headers: { "Content-type": "application/json; charset=UTF-8" },
+//     });
+
+//     if (!response.ok) {
+//       throw new Error("Credenciales incorrectas");
+//     }
+
+//     const result = await response.json();
+//     print(result)
+//     token.setToken(result.auth_token);
+//     procesando.value = false;
+//     correcto.value = true;
+//     router.push({ name: "home" });
+
+//   } catch (err) {
+//     console.error(err);
+//     error.value = true;
+//     procesando.value = false;
+//   }
+  
+// };
 const sendLoginForm = async () => {
-  procesando.value = true;
-  correcto.value = false;
-  error.value = false;
+    procesando.value = true;
+    correcto.value = false;
+    error.value = false;
+    errorMessage.value = "";
 
-  if (invalidUser.value || invalidPassword.value) {
-    error.value = true;
-    return;
-  }
-  try {
-    const admin = {
-      username: username.value,
-      password: password.value,
-    };
-
-    const response = await fetch("http://127.0.0.1:8000/api/v1/token/login/", {
-      method: "POST",
-      body: JSON.stringify(admin),
-      headers: { "Content-type": "application/json; charset=UTF-8" },
-    });
-
-    if (!response.ok) {
-      throw new Error("Credenciales incorrectas");
+    if (invalidUser.value || invalidPassword.value) {
+      error.value = true;
+      errorMessage.value = "Debes rellenar todos los campos";
+      return;
     }
 
-    const result = await response.json();
-    token.setToken(result.auth_token);
-    procesando.value = false;
-    correcto.value = true;
-    router.push({ name: "home" });
+    try {
+      const admin = {
+        username: username.value,
+        password: password.value,
+      };
 
-  } catch (err) {
-    console.error(err);
-    error.value = true;
-    procesando.value = false;
-  }
-  
+      const response = await fetch("http://localhost:8000/api/v1/token/login", {
+        method: "POST",
+        body: JSON.stringify(admin),
+        headers: {
+          "Content-type": "application/json; charset=UTF-8",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Error: Invalid username or password");
+      }
+
+      const result = await response.json();
+      token.setToken(result.auth_token);
+      router.push({ name: "home" });
+    } catch (err) {
+      console.error(err);
+      error.value = true;
+      errorMessage.value = err.message || "Error desconocido.";
+    } finally {
+      procesando.value = false;
+    }
 };
 </script>
 

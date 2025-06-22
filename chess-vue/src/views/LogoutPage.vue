@@ -1,5 +1,5 @@
 <template>
-  <div class="logout-container">
+  <div class="logout-container" data-cy="logoutPage">
     <div class="logout-card">
       <h2 class="logout-title">Sesión cerrada</h2>
       <p class="logout-text">Has salido del sistema correctamente.</p>

@@ -6,14 +6,15 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test:e2e": "start-server-and-test preview :4173 'cypress run --e2e'",
-    "test:e2e:dev": "start-server-and-test 'vite dev --port 4173' :4173 'cypress open --e2e'",
+    "test:e2e": "start-server-and-test preview :5173 'cypress run --e2e'",
+    "test:e2e:dev": "start-server-and-test 'vite dev --port 5173' :5173 'cypress open --e2e'",
     "test:unit": "cypress run --component",
     "test:unit:dev": "cypress open --component",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
     "bootstrap": "^5.3.5",
+    "cypress-dotenv": "^3.0.1",
     "pinia": "^2.0.26",
     "vue": "^3.2.45",
     "vue-router": "^4.1.6"

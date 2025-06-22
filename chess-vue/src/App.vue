@@ -21,8 +21,8 @@
           <RouterLink to="/">Home</RouterLink>
           <RouterLink v-if="!token.isAuthenticated()" to="/login">Admin Log-In</RouterLink>
           <RouterLink to="/faq">FAQ</RouterLink>
-          <div v-if="token.isAuthenticated()">
-            <button @click="logout" class="btn btn-outline-danger">
+          <div>
+            <button @click="logout" data-cy="logOutLink" class="btn btn-outline-danger">
               Log-Out
             </button>
           </div>
