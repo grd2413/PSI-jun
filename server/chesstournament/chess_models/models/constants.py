@@ -21,6 +21,9 @@ class RankingSystem(models.TextChoices):
     - Black Times: Prioriza a jugadores que han jugado más veces con las
     piezas negras.
     """
+
+    # Criterio de desempate para extraordinaria
+    PSEUDOBUCH = 'PB', _('Pseudo Buchholz')
     
     # El sistema Buchholz suma las puntuaciones obtenidas por los oponentes 
     # de un jugador. Este método es útil para desempatar cuando varios 

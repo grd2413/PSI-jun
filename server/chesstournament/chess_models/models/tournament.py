@@ -151,7 +151,17 @@ class Tournament(models.Model):
 
         buchholz_in_ranking = any(rs.value == 'BU' for rs in self.getRankingList())
         buchholzcut1_in_ranking = any(rs.value == 'BC' for rs in self.getRankingList())
+        pseudobuchholz_in_ranking = any(rs.value == 'PB' for rs in self.getRankingList())
 
+        if (pseudobuchholz_in_ranking):
+            scores = {}
+            scores = self.getPseudoBuchholz()
+            ranked_players = sorted(
+                scores.keys(),
+                key=lambda p: (scores[p][RankingSystem.PSEUDOBUCH], scores[p][RankingSystem.PLAIN_SCORE]),
+                reverse=True
+            )
+            return
         if (buchholzcut1_in_ranking):
             scores = {}
             scores = self.getBuchholzCutMinusOne(self.getAdjustedScores(self.getOpponents(scores)))
@@ -398,6 +408,29 @@ class Tournament(models.Model):
     
     def getSonnebornBerger(self):
         pass
+
+    def getPseudoBuchholz(self):
+        scores = self.getScores()
+        playersList = self.getOpponents(scores)
+
+        pseudobuchholz_scores = {}
+
+        for player, data in playersList.items():
+            opponents = data['opponents']
+            total = 0
+
+            for opponent in opponents:
+                total += scores[opponent][RankingSystem.PLAIN_SCORE]
+
+            total = total / len(opponents)
+            
+            pseudobuchholz_scores[player] = {
+                'PS': scores.get(player, {}).get('PS', 0.0),
+                RankingSystem.WINS.value: self._getPlayerWins(player),
+                RankingSystem.BLACKTIMES.value: self._getBlackTimes(player),
+                RankingSystem.PLAIN_SCORE: scores.get(player, {}).get(RankingSystem.PLAIN_SCORE, 0.0),
+                RankingSystem.PSEUDOBUCH: total
+            }
     
     def getRankingList(self):
         return RankingSystemClass.objects.filter(tournament=self)
