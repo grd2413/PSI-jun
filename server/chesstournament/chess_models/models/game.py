@@ -1,16 +1,20 @@
 from django.db import models
-from chess_models.models import constants
 from chess_models.models.player import Player
-from chess_models.models.round import Round  
+from chess_models.models.round import Round
 from chess_models.models.constants import Scores, TournamentType
 from rest_framework import serializers
 import requests
 
 from .other_models import LichessAPIError
 
+
 class Game(models.Model):
-    white = models.ForeignKey(Player, related_name='white_games', on_delete=models.DO_NOTHING, null=True, blank=True)
-    black = models.ForeignKey(Player, related_name='black_games', on_delete=models.DO_NOTHING, null=True, blank=True)
+    white = models.ForeignKey(Player, related_name='white_games',
+                              on_delete=models.DO_NOTHING, null=True,
+                              blank=True)
+    black = models.ForeignKey(Player, related_name='black_games',
+                              on_delete=models.DO_NOTHING, null=True,
+                              blank=True)
     finished = models.BooleanField(default=False)
     round = models.ForeignKey(Round, on_delete=models.DO_NOTHING)
     start_date = models.DateTimeField(auto_now_add=True)
@@ -21,12 +25,12 @@ class Game(models.Model):
     def get_lichess_game_result(self, game_id=None):
 
         if game_id is None:
-            game_id = self.id 
+            game_id = self.id
         url = f" https://lichess.org/api/game/{game_id}"
 
         try:
             response = requests.get(url)
-            response.raise_for_status()  
+            response.raise_for_status()
 
             data = response.json()
 
@@ -36,8 +40,10 @@ class Game(models.Model):
             white_player = self.white.lichess_username.lower()
             black_player = self.black.lichess_username.lower()
 
-            if white_player != white_player_lichess or black_player != black_player_lichess:
-                raise LichessAPIError(f"Players for game {game_id} are different")
+            if (white_player != white_player_lichess
+                    or black_player != black_player_lichess):
+                raise LichessAPIError(f"Players for game {game_id} \
+                                      are different")
 
             winner = data.get('winner')
             self.finished = True
@@ -58,22 +64,28 @@ class Game(models.Model):
         except requests.exceptions.RequestException as e:
             raise LichessAPIError(
                 f"Failed to fetch data for game {game_id}: {str(e)}"
-            )  
+            )
         except LichessAPIError as e:
             raise LichessAPIError(f"Error con el juego ID {game_id}: {str(e)}")
-      
+
     def __str__(self):
-        return f"{self.white}({self.white.id}) vs {self.black}({self.black.id}) = {self.result.label}"
-    
-def create_rounds(tournament, swissByes=[]):    
+        return (
+            f"{self.white}({self.white.id}) vs "
+            f"{self.black}({self.black.id}) = "
+            f"{self.result.label}"
+        )
+
+
+def create_rounds(tournament, swissByes=[]):
     players = tournament.getPlayers(sorted=True)
     num_players = tournament.getPlayersCount()
     rounds = []
-    
+
     if (tournament.tournament_type == TournamentType.ROUNDROBIN):
         rounds_schedule = berger_rounds(num_players)
         for round_number in range(num_players - 1):
-            round_instance = Round.objects.create(tournament=tournament, name=f"Rd {round_number+1}")
+            round_instance = Round.objects.create(tournament=tournament,
+                                                  name=f"Rd {round_number+1}")
             current_round = []
             for round_game in range(num_players // 2):
                 white_idx = rounds_schedule[round_number][round_game][0]
@@ -86,14 +98,14 @@ def create_rounds(tournament, swissByes=[]):
                     finished=False
                 ))
             rounds.append(current_round)
-    
-    elif (tournament.tournament_type == TournamentType.DOUBLEROUNDROBINSAMEDAY):
+    elif (tournament.tournament_type ==
+          TournamentType.DOUBLEROUNDROBINSAMEDAY):
         rounds_schedule = rb_rounds(num_players)
-    
     elif (tournament.tournament_type == TournamentType.SWISS):
         return create_swiss_first_round(tournament, swissByes)
 
     return rounds
+
 
 def rb_rounds(num_players):
     half = num_players // 2
@@ -117,12 +129,13 @@ def rb_rounds(num_players):
             pair = (p2, p1) if even_round else (p1, p2)
             pairs.append(pair)
 
-        rounds.append(pairs) 
+        rounds.append(pairs)
         rounds.append([(b, w) for (w, b) in pairs])
 
         barrel = barrel[half - 1:] + barrel[:half - 1]
 
     return rounds
+
 
 def berger_rounds(num_players):
     assert num_players > 0
@@ -186,7 +199,9 @@ def create_swiss_first_round(tournament, swissByes=None):
             finished=False
         ))
 
-    players_to_pair.sort(key=lambda p: p.fide_rating_classical or 0, reverse=True)
+    players_to_pair.sort(key=lambda p:
+                         p.fide_rating_classical or 0,
+                         reverse=True)
     half = len(players_to_pair) // 2
     for i in range(half):
         white = players_to_pair[i]

@@ -24,35 +24,35 @@ class RankingSystem(models.TextChoices):
 
     # Criterio de desempate para extraordinaria
     PSEUDOBUCH = 'PB', _('Pseudo Buchholz')
-    
-    # El sistema Buchholz suma las puntuaciones obtenidas por los oponentes 
-    # de un jugador. Este método es útil para desempatar cuando varios 
+
+    # El sistema Buchholz suma las puntuaciones obtenidas por los oponentes
+    # de un jugador. Este método es útil para desempatar cuando varios
     # jugadores tienen la misma cantidad de puntos.
     BUCHHOLZ = 'BU', _('Buchholz')
-    
-    # Buchholz Cut 1 es una variante del sistema Buchholz en el cual 
+
+    # Buchholz Cut 1 es una variante del sistema Buchholz en el cual
     # se excluye la puntuación del peor oponente para calcular el desempate.
     BUCHHOLZ_CUT1 = 'BC', _('Buchholz Cut 1')
-    
-    # El promedio de las puntuaciones de los oponentes se utiliza como 
+
+    # El promedio de las puntuaciones de los oponentes se utiliza como
     # criterio de desempate en el sistema Buchholz Average.
     BUCHHOLZ_AVERAGE = 'BA', _('Buchholz Average')
-    
-    # Sonneborn-Berger es un método de desempate que pondera las victorias 
-    # frente a oponentes más fuertes, es decir, otorga mayor valor a 
+
+    # Sonneborn-Berger es un método de desempate que pondera las victorias
+    # frente a oponentes más fuertes, es decir, otorga mayor valor a
     # las victorias contra jugadores con mejores resultados.
     SONNEBORN_BERGER = 'SB', _('Sonneborn-Berger')
-    
-    # Plain Score simplemente clasifica a los jugadores según 
+
+    # Plain Score simplemente clasifica a los jugadores según
     # la cantidad de puntos que hayan acumulado en el torneo, sin usar
     # desempates.
     PLAIN_SCORE = 'PS', _('Plain Score')
-    
-    # Este sistema de desempate clasifica a los jugadores según el número 
+
+    # Este sistema de desempate clasifica a los jugadores según el número
     # de victorias obtenidas en el torneo.
     WINS = 'WI', _('No. Wins')
-    
-    # Black Times desempata en favor de los jugadores que hayan 
+
+    # Black Times desempata en favor de los jugadores que hayan
     # jugado más partidas con las piezas negras, que normalmente se
     # considera una ligera desventaja.
     BLACKTIMES = 'BT', _('No. games played with Black')
@@ -60,8 +60,8 @@ class RankingSystem(models.TextChoices):
 
 class TournamentSpeed(models.TextChoices):
     """
-    Define las categorías de 'velocidad' del torneo, que se refieren al 
-    tiempo disponible para cada jugador. La elección del ritmo de juego 
+    Define las categorías de 'velocidad' del torneo, que se refieren al
+    tiempo disponible para cada jugador. La elección del ritmo de juego
     afecta significativamente la estrategia y estilo de las partidas.
 
     Opciones:
@@ -74,22 +74,22 @@ class TournamentSpeed(models.TextChoices):
     Nota: Lichess y FIDE usan definiciones ligeramente distintas para
     estos ritmos.
     """
-    
+
     # El ritmo Bullet es un formato de partidas ultrarrápidas,
     # generalmente con menos de 3 minutos por jugador para toda la partida.
     # No está reconocido oficialmente por FIDE.
     BULLET = 'BU', _('Bullet')
-    
+
     # El Blitz es un ritmo de juego rápido, donde cada jugador tiene entre
     # 3 y 10 minutos en total. Es reconocido tanto por FIDE como por
     # plataformas de ajedrez en línea.
     BLITZ = 'BL', _('Blitz')
-    
-    # En el ritmo Rapid, cada jugador dispone de entre 10 y 30 minutos 
+
+    # En el ritmo Rapid, cada jugador dispone de entre 10 y 30 minutos
     # para toda la partida. Es un ritmo intermedio que permite mayor
     # reflexión que Blitz, pero sigue siendo más rápido que el Clásico.
     RAPID = 'RA', _('Rápido')
-    
+
     # El ritmo Clásico es el más largo y típico en competiciones oficiales.
     # Generalmente, cada jugador tiene más de 60 minutos para completar
     # la partida, lo que favorece el análisis profundo y la estrategia.
@@ -109,20 +109,20 @@ class TournamentType(models.TextChoices):
     una con cada color).
     - SW: Sistema Suizo (pares basados en el rendimiento actual).
     """
-    
+
     # En un torneo Round Robin simple, cada participante juega
     # una vez contra cada uno de los demás participantes.
     ROUNDROBIN = 'SR', _('Round Robin Simple')
-    
+
     # En un torneo Round Robin doble, cada participante juega dos veces
     # contra cada otro participante: una partida con blancas y otra con negras.
     DOUBLEROUNDROBIN = 'DR', _('Round Robin Doble')
-    
+
     # En un torneo Round Robin doble en el mismo día, cada participante
     # juega dos veces consecutivas contra cada oponente, intercambiando colores
     # (blancas y negras), y ambas partidas se juegan el mismo día.
     DOUBLEROUNDROBINSAMEDAY = 'DD', _('Round Robin Doble (mismo día)')
-    
+
     # En un torneo suizo, los participantes no juegan todos contra todos.
     # En su lugar, los emparejamientos se realizan basados en los resultados
     # previos, enfrentando a jugadores con puntuaciones similares en cada
@@ -140,17 +140,17 @@ class TournamentBoardType(models.TextChoices):
     - OTB: (Over The Board) Partidas jugadas de forma presencial,
            con un tablero físico.
 
-    Cada tipo de tablero influye en la dinámica y logística del torneo, 
+    Cada tipo de tablero influye en la dinámica y logística del torneo,
     desde la interacción de los jugadores hasta la modalidad de organización.
     """
-    
+
     # Torneos que se juegan en línea en la plataforma lichess.org.
-    # Estos torneos permiten a jugadores de todo el mundo competir 
+    # Estos torneos permiten a jugadores de todo el mundo competir
     # de manera remota.
     LICHESS = 'LIC', _('lichess')
-    
-    # "Over The Board" (OTB) se refiere a torneos presenciales donde 
-    # los jugadores se enfrentan físicamente en un tablero real. 
+
+    # "Over The Board" (OTB) se refiere a torneos presenciales donde
+    # los jugadores se enfrentan físicamente en un tablero real.
     # Son el formato tradicional de torneos, común en clubes y eventos
     # oficiales.
     OTB = 'OTB', _('over the board')
@@ -207,7 +207,7 @@ class Scores(models.TextChoices):
     BYE_H = 'H', _('Half point bye')      # Medio punto asignado
     BYE_F = 'F', _('Full point bye')      # Punto completo asignado
     BYE_U = 'U', _('Unpaired game point bye')  # Punto por juego no emparejado
-    BYE_Z = 'Z', _('Zero point bye')      # Cero puntos, ausencia conocida (no se califica)
+    BYE_Z = 'Z', _('Zero point bye')      # Cero puntos, ausencia conocida
 
     # Partida no finalizada o sin resultado disponible
     NOAVAILABLE = '*', _('No available')

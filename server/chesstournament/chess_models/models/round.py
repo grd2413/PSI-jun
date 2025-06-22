@@ -1,5 +1,6 @@
 from django.db import models
-from django.utils import timezone  
+from django.utils import timezone
+
 
 class Round(models.Model):
     name = models.CharField(max_length=128)
