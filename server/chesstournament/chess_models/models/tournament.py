@@ -178,8 +178,7 @@ class Tournament(models.Model):
                                scores[p][RankingSystem.PLAIN_SCORE]),
                 reverse=True
             )
-            return
-        if (buchholzcut1_in_ranking):
+        elif (buchholzcut1_in_ranking):
             scores = {}
             scores = self.getBuchholzCutMinusOne(
                 self.getAdjustedScores

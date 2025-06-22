@@ -59,8 +59,17 @@ class TournamentModelTestExtension(TransactionTestCase):
         tournament.save()
         tournament.addToRankingList(RankingSystem.PSEUDOBUCH.value)
         playersList = tournament.getPseudoBuchholz()
-        score = RankingSystem.PSEUDOBUCH
+        pseudobuch = RankingSystem.PSEUDOBUCH
         for player, points in playersList.items():
-            self.assertEqual(points[score], results[player.name])
+            self.assertEqual(points[pseudobuch], results[player.name])
             # self.assertEqual(points['points_buchholt'],
             #                 results[player.name][1])
+        playersList = getRanking(tournament)
+        for i, (playerK, playerV) in enumerate(playersList.items()):
+            # print(f"{i+1:02d}",
+            #      playerK.name,
+            #      playerV[buchholz], playerV['rank'],
+            #      flush=True)
+            self.assertEqual(playerV[pseudobuch],
+                             results[playerK.name])
+        self.assertEqual(len(playersList), len(results))
