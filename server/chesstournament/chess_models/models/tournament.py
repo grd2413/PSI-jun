@@ -174,8 +174,8 @@ class Tournament(models.Model):
             scores = self.getPseudoBuchholz()
             ranked_players = sorted(
                 scores.keys(),
-                key=lambda p: (scores[p][RankingSystem.PSEUDOBUCH],
-                               scores[p][RankingSystem.PLAIN_SCORE]),
+                key=lambda p: (scores[p][RankingSystem.PLAIN_SCORE],
+                               scores[p][RankingSystem.PSEUDOBUCH]),
                 reverse=True
             )
         elif (buchholzcut1_in_ranking):
