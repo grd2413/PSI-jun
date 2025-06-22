@@ -261,6 +261,7 @@ class GetRanking(APIView):
                     player_data[system.lower()] = data.get(system, 0)
 
             response_data[player.id] = player_data
+            
         return Response(response_data, status=status.HTTP_200_OK)
 
 

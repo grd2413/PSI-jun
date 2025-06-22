@@ -40,6 +40,7 @@ class Tournament(models.Model):
 
     def getScores(self):
         scores = {player: self._getPlayerDict(player) for player in self.getPlayers()}
+        self.getBlackWins(scores)
         return {player: scores[player] for player in scores}
 
     def _getPlayerDict(self, player):
@@ -117,8 +118,6 @@ class Tournament(models.Model):
 
     def getBlackWins(self, scores):
         for player in scores.keys():
-            # scores[player][RankingSystem.BLACKTIMES.value] = 0
-            # scores[player][RankingSystem.WINS.value] = 0
             scores[player][RankingSystem.BLACKTIMES] = self._getBlackTimes(player)
             scores[player][RankingSystem.WINS] = self._getPlayerWins(player)
         return scores
@@ -184,7 +183,8 @@ class Tournament(models.Model):
                 scores.keys(),
                 key=lambda p: (
                     scores[p].get(RankingSystem.PLAIN_SCORE, 0),
-                    scores[p].get(RankingSystem.WINS.value, 0)
+                    scores[p].get(RankingSystem.WINS.value, 0),
+                    scores[p].get(RankingSystem.BLACKTIMES.value, 0)
                 ),
                 reverse=True
             )
