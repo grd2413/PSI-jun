@@ -42,8 +42,8 @@ class Game(models.Model):
 
             if (white_player != white_player_lichess
                     or black_player != black_player_lichess):
-                raise LichessAPIError(f"Players for game {game_id} \
-                                      are different")
+                raise LichessAPIError(f"Players for game {game_id} "
+                                      f"are different")
 
             winner = data.get('winner')
             self.finished = True
@@ -66,7 +66,7 @@ class Game(models.Model):
                 f"Failed to fetch data for game {game_id}: {str(e)}"
             )
         except LichessAPIError as e:
-            raise LichessAPIError(f"Error con el juego ID {game_id}: {str(e)}")
+            raise LichessAPIError(f"Error with game {game_id}: {str(e)}")
 
     def __str__(self):
         white = f"{self.white}({self.white.id})" if self.white else "(BYE)"
