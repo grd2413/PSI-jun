@@ -311,11 +311,11 @@ class UpdateLichessGameAPIView(APIView):
 
         try:
             result, white, black = game.get_lichess_game_result(lichess_game_id)
-        except LichessAPIError:
+        except LichessAPIError as e:
             return Response(
-                {"result": False, "message": "Failed to fetch data for game from Lichess."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+                {"result": False, "message": str(e)},
+                status=status.HTTP_400_BAD_REQUEST)
+        
         game.result = result
         game.finished = True
         game.save()

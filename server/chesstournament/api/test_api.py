@@ -680,8 +680,8 @@ class UpdateLichessGameAPIView(TransactionTestCase):
         # the games is not the same as the one used in lichess
         # so we may need to swap some of the players
 
-        # update games
-        white, black = 'ertopo', 'soria49'
+        # update games - swapped players due to previous comment
+        white, black = 'soria49', 'ertopo'
         white_player = Player.objects.get(lichess_username=white)
         black_player = Player.objects.get(lichess_username=black)
         game = Game.objects.get(white=white_player.id,
@@ -723,8 +723,8 @@ class UpdateLichessGameAPIView(TransactionTestCase):
         # the games is not the same as the one used in lichess
         # so we may need to swap some of the players
 
-        # update games
-        white, black = 'ertopo', 'soria49'
+        # update games - swapped players due to previous comment
+        white, black = 'soria49', 'ertopo'
         white_player = Player.objects.get(lichess_username=white)
         black_player = Player.objects.get(lichess_username=black)
         game = Game.objects.get(white=white_player.id,

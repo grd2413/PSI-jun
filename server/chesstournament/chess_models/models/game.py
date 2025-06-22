@@ -30,14 +30,14 @@ class Game(models.Model):
 
             data = response.json()
 
-            white_player_lichess = data['players']['white']['userId']
-            black_player_lichess = data['players']['black']['userId']
+            white_player_lichess = data['players']['white']['userId'].lower()
+            black_player_lichess = data['players']['black']['userId'].lower()
 
             white_player = self.white.lichess_username.lower()
             black_player = self.black.lichess_username.lower()
 
             if white_player != white_player_lichess or black_player != black_player_lichess:
-                raise LichessAPIError(f"Los jugadores no coinciden con los datos de Lichess. Game id: {game_id}")
+                raise LichessAPIError(f"Players for game {game_id} are different")
 
             winner = data.get('winner')
             self.finished = True
@@ -56,7 +56,9 @@ class Game(models.Model):
             return result, white_player, black_player
 
         except requests.exceptions.RequestException as e:
-            raise LichessAPIError(f"No se pudo obtener el resultado para el juego ID {game_id}: {str(e)}")
+            raise LichessAPIError(
+                f"Failed to fetch data for game {game_id}: {str(e)}"
+            )  
         except LichessAPIError as e:
             raise LichessAPIError(f"Error con el juego ID {game_id}: {str(e)}")
       
