@@ -2,12 +2,12 @@
 from .tournament import ( Tournament, RankingSystemClass ) # noqa F401
 from .other_models import Referee # noqa F401
 from .round import Round # noqa F401
-from .game import Game # noqa F401
+from .game import Game, create_rounds # noqa F401
 from .player import Player, LichessAPIError # noqa F401
 from .constants import Scores, TournamentType, TournamentSpeed, TournamentBoardType, Color, RankingSystem, LICHESS_USERS # noqa F401
 
 getGamesCount = Tournament.getGamesCount
-create_rounds = game.create_rounds
+create_rounds = create_rounds
 getPlayersCount = Tournament.getPlayersCount
 getScores = Tournament.getScores
 getRanking = Tournament.getRanking
