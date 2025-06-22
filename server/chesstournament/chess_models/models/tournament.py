@@ -459,6 +459,7 @@ class Tournament(models.Model):
                 .get(RankingSystem.PLAIN_SCORE, 0.0),
                 RankingSystem.PSEUDOBUCH: total
             }
+        return pseudobuchholz_scores
 
     def getRankingList(self):
         return RankingSystemClass.objects.filter(tournament=self)
