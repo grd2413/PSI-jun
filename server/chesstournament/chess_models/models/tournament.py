@@ -451,11 +451,10 @@ class Tournament(models.Model):
             total = total / len(opponents)
 
             pseudobuchholz_scores[player] = {
-                'PS': scores.get(player, {}).get('PS', 0.0),
                 RankingSystem.WINS.value: self._getPlayerWins(player),
                 RankingSystem.BLACKTIMES.value: self._getBlackTimes(player),
-                RankingSystem.PLAIN_SCORE: scores.get(player, {})
-                .get(RankingSystem.PLAIN_SCORE, 0.0),
+                RankingSystem.PLAIN_SCORE: scores.get(
+                    RankingSystem.PLAIN_SCORE, 0.0),
                 RankingSystem.PSEUDOBUCH: total
             }
         return pseudobuchholz_scores
