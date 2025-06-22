@@ -93,7 +93,7 @@ WSGI_APPLICATION = "chesstournament.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-db_from_env = dj_database_url.config(default='postgres://alumnodb:alumnodb@localhost:5432/chess', conn_max_age=500)
+db_from_env = dj_database_url.config(default=os.environ["DATABASE_URL"], conn_max_age=500)
 
 DATABASES  = {'default': db_from_env}
 
