@@ -12,7 +12,7 @@
 
   <div class="row" v-if="userRole === 'admin'">
     <h2>Create tournament</h2>
-    <TournamentForm
+    <CreateTournament
       :pairingSystems="pairingSystems"
       :boardTypes="boardTypes"
       :rankingMethods="rankingMethods"
@@ -42,7 +42,7 @@ onMounted(() => {
 
 const fetchTournaments = async () => {
   try {
-    const response = await fetch("http://127.0.0.1:8001/api/v1/tournament/", {
+    const response = await fetch("http://127.0.0.1:8000/api/v1/tournaments/", {
       headers: {
         Authorization: `Token ${token.getToken()}`,
       },
@@ -78,5 +78,3 @@ const fetchModelData = async () => {
   rankingMethods.value = await rmRes.json();
 };
 </script>
-
-
