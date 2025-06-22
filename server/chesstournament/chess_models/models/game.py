@@ -69,11 +69,10 @@ class Game(models.Model):
             raise LichessAPIError(f"Error con el juego ID {game_id}: {str(e)}")
 
     def __str__(self):
-        return (
-            f"{self.white}({self.white.id}) vs "
-            f"{self.black}({self.black.id}) = "
-            f"{self.result.label}"
-        )
+        white = f"{self.white}({self.white.id})" if self.white else "(BYE)"
+        black = f"{self.black}({self.black.id})" if self.black else "(BYE)"
+        result = Scores(self.result).label if self.result else "—"
+        return f"{white} vs {black} = {result}"
 
 
 def create_rounds(tournament, swissByes=[]):
