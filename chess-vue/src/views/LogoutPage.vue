@@ -1,10 +1,10 @@
 <template>
   <div class="logout-container" data-cy="logoutPage">
     <div class="logout-card">
-      <h2 class="logout-title">Sesión cerrada</h2>
-      <p class="logout-text">Has salido del sistema correctamente.</p>
+      <h2 class="logout-title">Log Out</h2>
+      <p class="logout-text">You are being log out</p>
       <p class="logout-subtext">
-        Serás redirigido a la página principal en <strong>5 segundos</strong>...
+        You will be redirected to home in <strong>5 seconds</strong>...
       </p>
     </div>
   </div>
