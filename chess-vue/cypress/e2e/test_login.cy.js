@@ -6,7 +6,7 @@ describe('Login Test', () => {
     });
   
     it('Displays an error message for incorrect credentials', () => {
-      cy.visit('/');
+      cy.visit('/login');
 
       // Fill in the login form with incorrect credentials
       cy.get('[data-cy=username]').type(Cypress.env('username'));
