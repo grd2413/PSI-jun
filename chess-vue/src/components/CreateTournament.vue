@@ -53,7 +53,9 @@
 <script setup>
 import { reactive, ref } from 'vue'
 import { useTokenStore } from '@/stores/token'
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const token = useTokenStore()
 
 const playerInput = ref('')

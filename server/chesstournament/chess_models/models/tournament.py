@@ -185,8 +185,8 @@ class Tournament(models.Model):
                 (self.getOpponents(scores)))
             ranked_players = sorted(
                 scores.keys(),
-                key=lambda p: (scores[p][RankingSystem.BUCHHOLZ_CUT1],
-                               scores[p][RankingSystem.PLAIN_SCORE]),
+                key=lambda p: (scores[p][RankingSystem.PLAIN_SCORE],
+                               scores[p][RankingSystem.BUCHHOLZ_CUT1]),
                 reverse=True
             )
         elif (buchholz_in_ranking):
@@ -196,8 +196,8 @@ class Tournament(models.Model):
                 (self.getOpponents(scores)))
             ranked_players = sorted(
                 scores.keys(),
-                key=lambda p: (scores[p][RankingSystem.BUCHHOLZ],
-                               scores[p][RankingSystem.PLAIN_SCORE]),
+                key=lambda p: (scores[p][RankingSystem.PLAIN_SCORE],
+                               scores[p][RankingSystem.BUCHHOLZ]),
                 reverse=True
             )
         else:

@@ -28,7 +28,7 @@
         class="list-group-item"
         data-cy="tournament-item"
       >
-        {{ tournament.name }}
+      <RouterLink :to="`/tournamentdetail/${tournament.id}`">{{ tournament.name }}</RouterLink>
       </li>
     </ul>
 

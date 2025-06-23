@@ -29,7 +29,13 @@ const router = createRouter({
       name: 'CreateTournament',
       component: () => import('../components/CreateTournament.vue'),
       meta: { requiresAuth: true },
-    }
+    },
+    {
+      path: '/tournamentdetail/:tournament_id',
+      name: 'tournamentDetail',
+      component: () => import('../components/TournamentDetail.vue'),
+      meta: { requiresAuth: true },
+    },
   ],
 });
 export default router;

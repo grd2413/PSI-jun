@@ -150,6 +150,13 @@ class CreateRoundAPIView(APIView):
 
         return Response({"result": True}, status=status.HTTP_201_CREATED)
 
+class TournamentDetailAPIView(APIView):
+    permission_classes = []
+
+    def get(self, request, tournament_id):
+        tournament = get_object_or_404(Tournament, id=tournament_id)
+        serializer = TournamentSerializer(tournament)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 class SearchTournamentsAPIView(APIView):
     permission_classes = []
@@ -316,7 +323,6 @@ class GetRanking(APIView):
                     player_data[system.lower()] = data.get(system, 0)
 
             response_data[player.id] = player_data
-
         return Response(response_data, status=status.HTTP_200_OK)
 
 

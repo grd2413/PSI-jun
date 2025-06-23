@@ -128,12 +128,6 @@ const sendLoginForm = async () => {
 };
 </script>
 
-<!-- <style scoped>
-form {
-  width: 250px;
-}
-</style> -->
-
 <style scoped>
 .h1 {
   align-items: center;
