@@ -504,7 +504,8 @@ class Tournament(models.Model):
         return Game.objects.filter(round__tournament=self)
 
     def __str__(self):
-        return f"tournament_{self.id:02}"
+        id = f"{self.id:02}" if self.id else "0"
+        return f"tournament_{id}"
 
 
 class TournamentPlayers(models.Model):

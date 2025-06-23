@@ -1,3 +1,4 @@
+from collections import defaultdict
 from django.shortcuts import get_object_or_404
 from chess_models.models.constants import RankingSystem, Scores, TournamentBoardType, TournamentType
 from chess_models.models.player import Player, PlayerSerializer
@@ -340,9 +341,36 @@ class GetPlayers(APIView):
 
 
 class GetRoundResults(APIView):
+    permission_classes = [AllowAny]
+
     def get(self, request, tournament_id, format=None):
-        return Response({"detail": "Not implemented"},
-                        status=status.HTTP_501_NOT_IMPLEMENTED)
+        try:
+            tournament = Tournament.objects.get(id=tournament_id)
+        except Tournament.DoesNotExist:
+            return Response({"detail": "Tournament not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        games = tournament.getGames()
+        rounds_dict = defaultdict(list)
+
+        for game in games:
+            round_number = game.round.name
+            game_data = {
+                'id': game.id,
+                'white': game.white.name if game.white else None,
+                'black': game.black.name if game.black else None,
+                'result': game.result
+            }
+            rounds_dict[round_number].append(game_data)
+
+        response_data = [
+            {
+                "round_number": round_number,
+                "games": rounds_dict[round_number]
+            }
+            for round_number in sorted(rounds_dict)
+        ]
+
+        return Response(response_data, status=status.HTTP_200_OK)
 
 
 class UpdateLichessGameAPIView(APIView):

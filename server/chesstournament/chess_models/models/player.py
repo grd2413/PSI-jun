@@ -103,9 +103,12 @@ class Player(models.Model):
         return super().save(*args, **kwargs)
 
     def __str__(self):
-        if self.lichess_username:
-            return self.lichess_username
-        return self.name
+        if self is not None:
+            if self.lichess_username:
+                return f"{self.lichess_username}"
+            return f"{self.name}"
+        else:
+            return "BYE"
 
 
 class PlayerSerializer(serializers.ModelSerializer):

@@ -187,67 +187,67 @@ input {
         </div>
       </div>
 
-      <!-- Rondas y juegos -->
-      <div class="accordion-item">
-        <h2 class="accordion-header" id="headingRounds">
-          <button
-            class="accordion-button collapsed"
-            type="button"
-            data-bs-toggle="collapse"
-            data-bs-target="#collapseRounds"
-            aria-expanded="false"
-            aria-controls="collapseRounds"
-          >
-            Rondas y Partidas
-          </button>
-        </h2>
-        <div
-          id="collapseRounds"
-          class="accordion-collapse collapse"
-          aria-labelledby="headingRounds"
-          data-bs-parent="#tournamentAccordion"
+    <!-- Rondas y juegos -->
+    <div class="accordion-item">
+    <h2 class="accordion-header" id="headingRounds">
+        <button
+        class="accordion-button collapsed"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#collapseRounds"
+        aria-expanded="false"
+        aria-controls="collapseRounds"
         >
-          <div class="accordion-body">
-            <div
-              v-for="(round, index) in rounds"
-              :key="index"
-              class="mb-4 border p-3 rounded"
+        Rondas y Partidas
+        </button>
+    </h2>
+    <div
+        id="collapseRounds"
+        class="accordion-collapse collapse"
+        aria-labelledby="headingRounds"
+        data-bs-parent="#tournamentAccordion"
+    >
+        <div class="accordion-body">
+        <div
+            v-for="(round, index) in rounds"
+            :key="index"
+            class="mb-4 border p-3 rounded"
+        >
+            <h5 class="mb-3"> {{ round.round_number }}</h5>
+            <ul class="list-group">
+            <li
+                v-for="game in round.games"
+                :key="game.id"
+                class="list-group-item d-flex justify-content-between align-items-center"
             >
-              <h5 class="mb-3">Ronda {{ round.id }}</h5>
-              <ul class="list-group">
-                <li
-                  v-for="game in round.games"
-                  :key="game.id"
-                  class="list-group-item d-flex justify-content-between align-items-center"
-                >
-                  {{ game.white_player }} vs {{ game.black_player }}
-                  <span>
-                    <template v-if="game.result">
-                      Resultado: {{ game.result }}
-                    </template>
-                    <template v-else-if="boardType === 'OTB'">
-                      <input
-                        v-model="game.new_result"
-                        placeholder="Ej: 1-0"
-                        class="form-control d-inline-block w-auto me-2"
-                      />
-                      <button
-                        @click="submitResult(game)"
-                        class="btn btn-sm btn-primary"
-                      >
-                        Guardar
-                      </button>
-                    </template>
-                    <template v-else>
-                      <em>Esperando resultado de Lichess</em>
-                    </template>
-                  </span>
-                </li>
-              </ul>
-            </div>
-          </div>
+                {{ game.white }} vs {{ game.black }}
+                <span>
+                <template v-if="game.result">
+                    Resultado: {{ game.result }}
+                </template>
+                <template v-else-if="boardType === 'OTB'">
+                    <input
+                    v-model="game.new_result"
+                    placeholder="Ej: 1-0"
+                    class="form-control d-inline-block w-auto me-2"
+                    />
+                    <button
+                    @click="submitResult(game)"
+                    class="btn btn-sm btn-primary"
+                    >
+                    Guardar
+                    </button>
+                </template>
+                <template v-else>
+                    <em>Esperando resultado de Lichess</em>
+                </template>
+                </span>
+            </li>
+            </ul>
         </div>
-      </div>
+        </div>
+    </div>
+    </div>
 
     </div>
   </div>
@@ -264,8 +264,25 @@ const tournamentId = route.params.tournament_id
 
 const tournamentName = ref('')
 const ranking = ref([])
+const boardType = ref('')
+
 const rounds = ref([])
-const boardType = ref('')  // Para saber si es OTB
+const loading = ref(true)
+
+const fetchRounds = async () => {
+  loading.value = true
+  try {
+    const res = await fetch(`http://127.0.0.1:8000/api/v1/get_round_results/${tournamentId}/`)
+    if (!res.ok) throw new Error('Error al obtener las rondas')
+    const data = await res.json()
+    rounds.value = data
+    console.log(rounds.value)
+  } catch (err) {
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
+}
 
 const fetchTournamentData = async () => {
   try {
@@ -291,7 +308,6 @@ const fetchTournamentData = async () => {
     
   } catch (err) {
     console.error('Error al cargar datos del torneo:', err)
-    //alert('No se pudieron cargar los datos del torneo')
   }
 }
 
@@ -327,7 +343,8 @@ const submitResult = async (game) => {
 }
 
 onMounted(() => {
-  fetchTournamentData()
+  fetchTournamentData(),
+  fetchRounds()
 })
 </script>
 
