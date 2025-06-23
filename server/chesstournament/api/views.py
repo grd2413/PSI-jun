@@ -40,7 +40,6 @@ class CustomUserViewSet(UserViewSet):
         return Response({"detail": "Método no permitido."},
                         status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
-
 class GameViewSet(viewsets.ModelViewSet):
     queryset = Game.objects.all()
     serializer_class = GameSerializer
@@ -58,6 +57,15 @@ class GameViewSet(viewsets.ModelViewSet):
 
         return response
 
+class UserAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        return Response({
+            "name": user.username,
+            "email": user.email,
+        })
 
 class CreateGameAPIView(APIView):
     queryset = Game.objects.all()
@@ -419,8 +427,7 @@ class UpdateLichessGameAPIView(APIView):
 
 
 class UpdateOTBGameAPIView(APIView):
-    permission_classes = []
-    authentication_classes = []
+    permission_classes = [AllowAny]
 
     def post(self, request, format=None):
         game_id = request.data.get('game_id')
@@ -443,11 +450,15 @@ class UpdateOTBGameAPIView(APIView):
             return Response({"result": False, "message":
                              "Game already finished"},
                             status=status.HTTP_400_BAD_REQUEST)
+        user = request.user
 
-        if not ((game.white.name == name and game.white.email == email) or
+        # Permitir si es admin
+        if user.is_staff or user.is_superuser:
+            pass
+        elif not ((game.white.name == name and game.white.email == email) or
                 (game.black.name == name and game.black.email == email)):
             return Response({"result": False, "message":
-                             "Player authentication failed"},
+                            "Player authentication failed"},
                             status=status.HTTP_403_FORBIDDEN)
 
         if result not in [Scores.WHITE.value,

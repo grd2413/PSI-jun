@@ -16,6 +16,7 @@ from .views import (
     UpdateLichessGameAPIView,
     UpdateOTBGameAPIView,
     AdminUpdateGameAPIView,
+    UserAPIView,
 )
 
 router = DefaultRouter()
@@ -27,6 +28,7 @@ urlpatterns = [
     path('', include(router.urls)),
 
     # Endpoints
+    path('current_user/', UserAPIView.as_view(), name='current_user'),
     path('create_round/', CreateRoundAPIView.as_view(),
          name='create_round'),
     path('searchTournaments/', SearchTournamentsAPIView.as_view(),

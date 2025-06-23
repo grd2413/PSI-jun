@@ -1,145 +1,3 @@
-<!-- <template>
-  <div class="container mt-4">
-    <h2 class="mb-4">Torneo: {{ tournamentName }}</h2>
-
-    <h4>Clasificación</h4>
-    <table class="table table-striped">
-      <thead>
-        <tr>
-          <th>Posición</th>
-          <th>Jugador</th>
-          <th>Puntos</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="(player, index) in ranking" :key="player.username">
-          <td>{{ index + 1 }}</td>
-          <td>{{ player.username }}</td>
-          <td>{{ player.points }}</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h4 class="mt-4">Rondas y Partidas</h4>
-    <div v-for="(round, index) in rounds" :key="index" class="mb-3">
-      <h5>Ronda {{ round.round_number }}</h5>
-      <ul class="list-group">
-        <li
-          v-for="game in round.games"
-          :key="game.id"
-          class="list-group-item d-flex justify-content-between align-items-center"
-        >
-          {{ game.white_player }} vs {{ game.black_player }}
-          <span>
-            <template v-if="game.result">
-              Resultado: {{ game.result }}
-            </template>
-            <template v-else-if="boardType === 'OTB'">
-              <input
-                v-model="game.new_result"
-                placeholder="Ej: 1-0"
-                class="form-control d-inline-block w-auto me-2"
-              />
-              <button @click="submitResult(game)" class="btn btn-primary btn-sm">Guardar</button>
-            </template>
-          </span>
-        </li>
-      </ul>
-    </div>
-  </div>
-</template>
-
-<script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import { useTokenStore } from '@/stores/token'
-
-const route = useRoute()
-const tokenStore = useTokenStore()
-const tournamentId = route.params.tournament_id
-
-const tournamentName = ref('')
-const ranking = ref([])
-const rounds = ref([])
-const boardType = ref('')  // Para saber si se permite actualizar resultado (solo OTB)
-
-const fetchTournamentData = async () => {
-  try {
-    // Cargar clasificación
-    const rankingRes = await fetch(`http://127.0.0.1:8000/api/v1/get_ranking/${tournamentId}/`, {
-      headers: {
-        Authorization: `Token ${tokenStore.getToken()}`,
-      }
-    })
-
-    const rankingData = await rankingRes.json()
-    ranking.value = rankingData.ranking
-    tournamentName.value = rankingData.tournament_name || `#${tournamentId}`
-    boardType.value = rankingData.board_type || ''  // si se incluye en la respuesta
-
-    // Cargar rondas y partidas
-    const roundsRes = await fetch(`http://127.0.0.1:8000/api/v1/get_round_results/${tournamentId}/`, {
-      headers: {
-        Authorization: `Token ${tokenStore.getToken()}`,
-      }
-    })
-
-    const roundsData = await roundsRes.json()
-    rounds.value = roundsData.map(round => ({
-      ...round,
-      games: round.games.map(game => ({
-        ...game,
-        new_result: ''
-      }))
-    }))
-  } catch (err) {
-    console.error('Error al cargar datos del torneo:', err)
-    alert('No se pudieron cargar los datos del torneo')
-  }
-}
-
-const submitResult = async (game) => {
-  const payload = {
-    game_id: game.id,
-    result: game.new_result
-  }
-
-  try {
-    const response = await fetch('http://127.0.0.1:8000/api/v1/update_otb_game/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Token ${tokenStore.getToken()}`,
-      },
-      body: JSON.stringify(payload)
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      console.error(errorData)
-      throw new Error('Error al actualizar resultado')
-    }
-
-    game.result = game.new_result
-    game.new_result = ''
-    alert('Resultado guardado correctamente')
-  } catch (error) {
-    console.error(error)
-    alert(error.message || 'Fallo al guardar el resultado')
-  }
-}
-
-onMounted(() => {
-  fetchTournamentData()
-})
-</script>
-
-<style scoped>
-input {
-  max-width: 100px;
-}
-</style> -->
-
 <template>
   <div class="container mt-4">
     <h2 class="mb-4">Torneo: {{ tournamentName }}</h2>
@@ -222,13 +80,13 @@ input {
             >
                 {{ game.white }} vs {{ game.black }}
                 <span>
-                <template v-if="game.result">
+                <template v-if="game.result !== '*'">
                     Resultado: {{ game.result }}
                 </template>
                 <template v-else-if="boardType === 'OTB'">
                     <input
                     v-model="game.new_result"
-                    placeholder="Ej: 1-0"
+                    placeholder="w/b/="
                     class="form-control d-inline-block w-auto me-2"
                     />
                     <button
@@ -239,7 +97,7 @@ input {
                     </button>
                 </template>
                 <template v-else>
-                    <em>Esperando resultado de Lichess</em>
+                    <em>Esperando resultado</em>
                 </template>
                 </span>
             </li>
@@ -259,7 +117,7 @@ import { useRoute } from 'vue-router'
 import { useTokenStore } from '@/stores/token'
 
 const route = useRoute()
-const tokenStore = useTokenStore()
+const token = useTokenStore()
 const tournamentId = route.params.tournament_id
 
 const tournamentName = ref('')
@@ -269,6 +127,9 @@ const boardType = ref('')
 const rounds = ref([])
 const loading = ref(true)
 
+const userName = ref("");
+const userEmail = ref("");
+
 const fetchRounds = async () => {
   loading.value = true
   try {
@@ -276,7 +137,6 @@ const fetchRounds = async () => {
     if (!res.ok) throw new Error('Error al obtener las rondas')
     const data = await res.json()
     rounds.value = data
-    console.log(rounds.value)
   } catch (err) {
     console.error(err)
   } finally {
@@ -288,7 +148,7 @@ const fetchTournamentData = async () => {
   try {
     const res = await fetch(`http://127.0.0.1:8000/api/v1/tournament/${tournamentId}/`, {
       headers: {
-        Authorization: `Token ${tokenStore.getToken()}`,
+        Authorization: `Token ${token.getToken()}`,
       }
     })
     const tournament = await res.json();
@@ -297,7 +157,7 @@ const fetchTournamentData = async () => {
     
     const rankingRes = await fetch(`http://127.0.0.1:8000/api/v1/get_ranking/${tournamentId}/`, {
       headers: {
-        Authorization: `Token ${tokenStore.getToken()}`,
+        Authorization: `Token ${token.getToken()}`,
       }
     })
     if (!rankingRes.ok) throw new Error('Error al obtener ranking')
@@ -311,40 +171,84 @@ const fetchTournamentData = async () => {
   }
 }
 
-const submitResult = async (game) => {
-  const payload = {
-    game_id: game.id,
-    result: game.new_result
-  }
+const getCurrentUser = async () => {
+  const res = await fetch("http://127.0.0.1:8000/api/v1/current_user/", {
+    method: "GET",
+    headers: {
+      Authorization: `Token ${token.getToken()}`,
+    },
+  });
 
-  try {
-    const response = await fetch('http://127.0.0.1:8000/api/v1/update_otb_game/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Token ${tokenStore.getToken()}`,
-      },
-      body: JSON.stringify(payload)
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json()
-      console.error(errorData)
-      throw new Error('Error al actualizar resultado')
-    }
-
-    game.result = game.new_result
-    game.new_result = ''
-    alert('Resultado guardado correctamente')
-  } catch (error) {
-    console.error(error)
-    alert(error.message || 'Fallo al guardar el resultado')
+  if (res.ok) {
+    const data = await res.json();
+    userName.value = data.name;
+    userEmail.value = data.email;
+    console.log(userName, userEmail)
+  } else {
+    console.warn("No se pudo obtener el usuario actual");
   }
 }
 
+const submitResult = async (game) => {
+  try {
+    if (boardType.value === "OTB") {
+      const payload = {
+        game_id: game.id,
+        name: userName.value,
+        email: userEmail.value,
+        otb_result: game.new_result,
+      };
+      const res = await fetch("http://127.0.0.1:8000/api/v1/update_otb_game/", {
+        method: "POST",
+        headers: { Authorization: `Token ${token.getToken()}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (data.result) {
+        alert("Resultado guardado correctamente");
+        game.result = game.new_result;
+      } else {
+        alert(`Error: ${data.message}`);
+      }
+
+    } else if (boardType === "LIC") {
+      if (!game.lichess_game_id) {
+        alert("Debes introducir el ID de la partida de Lichess");
+        return;
+      }
+
+      const payload = {
+        game_id: game.id,
+        lichess_game_id: game.lichess_game_id,
+      };
+
+      const res = await fetch("http://127.0.0.1:8000/api/v1/update_lichess_game/", {
+        method: "POST",
+        headers: { Authorization: `Token ${token.getToken()}`, "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (data.result) {
+        alert("Resultado actualizado desde Lichess");
+        game.result = "Actualizado";
+      } else {
+        alert(`Error: ${data.message}`);
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Error al guardar el resultado");
+  }
+};
+
 onMounted(() => {
   fetchTournamentData(),
-  fetchRounds()
+  fetchRounds(),
+  getCurrentUser()
 })
 </script>
 
