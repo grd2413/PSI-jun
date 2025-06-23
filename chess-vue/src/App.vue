@@ -4,10 +4,10 @@
       <div class="header-left">
         <nav class="nav-links">
           <RouterLink to="/">Home</RouterLink>
-          <RouterLink v-if="!token.isAuthenticated()" to="/login">Admin Log-In</RouterLink>
+          <RouterLink data-cy=login-cypress-test v-if="!token.isAuthenticated()" to="/login">Admin Log-In</RouterLink>
           <RouterLink to="/faq">FAQ</RouterLink>
           <div>
-            <button @click="logout" data-cy="logOutLink" class="btn btn-outline-danger">
+            <button @click="logout" data-cy="logout-cypress-test" class="btn btn-outline-danger">
               Log-Out
             </button>
           </div>
