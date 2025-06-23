@@ -85,45 +85,6 @@ const password = ref("");
 const invalidUser = computed(() => username.value.length < 1);
 const invalidPassword = computed(() => password.value.length < 1);
 
-// const sendLoginForm = async () => {
-//   procesando.value = true;
-//   correcto.value = false;
-//   error.value = false;
-
-//   if (invalidUser.value || invalidPassword.value) {
-//     error.value = true;
-//     return;
-//   }
-//   try {
-//     const admin = {
-//       username: username.value,
-//       password: password.value,
-//     };
-
-//     const response = await fetch("http://127.0.0.1:8000/api/v1/token/login/", {
-//       method: "POST",
-//       body: JSON.stringify(admin),
-//       headers: { "Content-type": "application/json; charset=UTF-8" },
-//     });
-
-//     if (!response.ok) {
-//       throw new Error("Credenciales incorrectas");
-//     }
-
-//     const result = await response.json();
-//     print(result)
-//     token.setToken(result.auth_token);
-//     procesando.value = false;
-//     correcto.value = true;
-//     router.push({ name: "home" });
-
-//   } catch (err) {
-//     console.error(err);
-//     error.value = true;
-//     procesando.value = false;
-//   }
-  
-// };
 const sendLoginForm = async () => {
     procesando.value = true;
     correcto.value = false;
