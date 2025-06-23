@@ -238,18 +238,18 @@ class TournamentCreateAPIView(APIView):
                 draw_points=draw_points,
                 lose_points=lose_points,
             )
-            #AQUI
+
             #methods: ['pseudobuchholz', 'buchholz', 'cumulative', 'wins']
-            # for method in ranking_methods:
-            #     if method == 'buchholz':
-            #         method = RankingSystem.BUCHHOLZ
-            #     elif method == 'cumulative':
-            #         method = RankingSystem.PLAIN_SCORE
-            #     elif method == 'wins':
-            #         method = RankingSystem.WINS
-            #     elif method == 'pseudobuchholz':
-            #         method = RankingSystem.PSEUDOBUCH
-            #     tournament.addToRankingList(method)
+            for method in ranking_methods:
+                if method == 'buchholz':
+                    method = RankingSystem.BUCHHOLZ
+                elif method == 'cumulative':
+                    method = RankingSystem.PLAIN_SCORE
+                elif method == 'wins':
+                    method = RankingSystem.WINS
+                elif method == 'pseudobuchholz':
+                    method = RankingSystem.PSEUDOBUCH
+                tournament.addToRankingList(method)
 
             lines = players_text.strip().split("\n")
             if len(lines) > 1 and lines[0].strip()\
