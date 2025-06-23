@@ -24,6 +24,12 @@ const router = createRouter({
       name: "logout",
       component: () => import("../views/LogoutPage.vue"),
     },
+    {
+      path: '/createtournament',
+      name: 'CreateTournament',
+      component: () => import('../components/CreateTournament.vue'),
+      meta: { requiresAuth: true },
+    }
   ],
 });
 export default router;

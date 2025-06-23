@@ -1,5 +1,5 @@
 from django.shortcuts import get_object_or_404
-from chess_models.models.constants import RankingSystem, Scores
+from chess_models.models.constants import RankingSystem, Scores, TournamentBoardType, TournamentType
 from chess_models.models.player import Player, PlayerSerializer
 from djoser.views import UserViewSet
 from rest_framework.views import APIView
@@ -203,11 +203,29 @@ class TournamentCreateAPIView(APIView):
             players_text = request.data.get("players", "")
             start_date = request.data.get("start_date", "")
 
-            if not all([name, tournament_type, tournament_speed, board_type]):
+            only_admin_can_update = request.data.get(
+                "only_admin_can_update", False)
+            ranking_methods = request.data.get("ranking_methods", [])
+            points = request.data.get("points", {})
+            win_points = points.get("win", 1.0)
+            draw_points = points.get("draw", 0.5)
+            lose_points = points.get("loss", 0.0)
+
+            if not all([name, tournament_type, board_type]):
                 return Response(
                     {"error": "Missing required fields."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+            
+            if tournament_type == 'SWISS':
+                tournament_type = TournamentType.SWISS
+            elif tournament_type == 'ROUNDROBIN':
+                tournament_type = TournamentType.ROUNDROBIN
+            
+            if board_type == 'LIC':
+                board_type = TournamentBoardType.LICHESS
+            elif board_type == 'OTB':
+                board_type = TournamentBoardType.OTB
 
             tournament = Tournament.objects.create(
                 name=name,
@@ -215,7 +233,23 @@ class TournamentCreateAPIView(APIView):
                 tournament_speed=tournament_speed,
                 board_type=board_type,
                 start_date=start_date,
+                only_administrative=only_admin_can_update,
+                win_points=win_points,
+                draw_points=draw_points,
+                lose_points=lose_points,
             )
+            #AQUI
+            #methods: ['pseudobuchholz', 'buchholz', 'cumulative', 'wins']
+            # for method in ranking_methods:
+            #     if method == 'buchholz':
+            #         method = RankingSystem.BUCHHOLZ
+            #     elif method == 'cumulative':
+            #         method = RankingSystem.PLAIN_SCORE
+            #     elif method == 'wins':
+            #         method = RankingSystem.WINS
+            #     elif method == 'pseudobuchholz':
+            #         method = RankingSystem.PSEUDOBUCH
+            #     tournament.addToRankingList(method)
 
             lines = players_text.strip().split("\n")
             if len(lines) > 1 and lines[0].strip()\

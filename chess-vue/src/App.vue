@@ -17,11 +17,6 @@
     <main class="main-content">
       <RouterView />
     </main>
-    <footer class="app-footer">
-      <div class="footer-content">
-        <p>© 2025 Mi Aplicación. Todos los derechos reservados.</p>
-      </div>
-    </footer>
   </div>
 </template>
 
@@ -89,49 +84,3 @@ const logout = async () => {
   padding-top: 90px;
 }
 </style>
-
-<!-- <style scoped>
-.app-header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  background-color: var(--color-bg, #333);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-}
-
-.header-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  padding: 1rem;
-}
-
-.logo {
-  width: 32px;
-  height: 32px;
-  margin-right: 32px;
-}
-
-.nav-links {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.nav-links a {
-  color: var(--color-white, #fff);
-  text-decoration: none;
-  font-weight: 500;
-  padding-bottom: 0.25rem;
-}
-
-.nav-links a.router-link-exact-active {
-  border-bottom: 2px solid var(--color-primary, #42b983);
-}
-
-.main-content {
-  padding-top: 70px;
-}
-</style> -->
