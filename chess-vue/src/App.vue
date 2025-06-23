@@ -1,20 +1,5 @@
 <template>
   <div>
-    <!-- <header class="app-header">
-      <div class="header-content">
-        <img src="@/assets/logo.svg" alt="Logo" class="logo" />
-        <nav class="nav-links">
-          <RouterLink to="/">Home</RouterLink>
-          <RouterLink to="/login">Admin Log-In</RouterLink>
-           <div v-if="token.isAuthenticated()" class="mt-4">
-              <button @click="logout" class="btn btn-outline-danger">
-                Logout
-              </button>
-            </div>
-          <RouterLink to="/faq">FAQ</RouterLink>
-        </nav>
-      </div>
-    </header> -->
     <header class="app-header">
       <div class="header-left">
         <nav class="nav-links">
@@ -32,6 +17,11 @@
     <main class="main-content">
       <RouterView />
     </main>
+    <footer class="app-footer">
+      <div class="footer-content">
+        <p>© 2025 Mi Aplicación. Todos los derechos reservados.</p>
+      </div>
+    </footer>
   </div>
 </template>
 

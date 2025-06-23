@@ -154,6 +154,11 @@ class CreateRoundAPIView(APIView):
 class SearchTournamentsAPIView(APIView):
     permission_classes = []
 
+    def get(self, request):
+        tournaments = Tournament.objects.all().order_by('-name')
+        serializer = TournamentSerializer(tournaments, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     def post(self, request):
         search_string = request.data.get('search_string')
         if not search_string:
